@@ -7,6 +7,7 @@ import '../cubits/member/member_state.dart';
 import '../models/member.dart';
 import '../utils/constants.dart';
 import '../utils/formatters.dart';
+import '../widgets/desktop_dialog.dart';
 
 class MembersScreen extends StatefulWidget {
   const MembersScreen({super.key});
@@ -45,7 +46,9 @@ class _MembersScreenState extends State<MembersScreen> {
         elevation: 0,
         actions: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSizes.paddingMedium,
+            ),
             child: ElevatedButton.icon(
               onPressed: () => _showAddMemberDialog(context),
               icon: const Icon(Icons.add),
@@ -89,7 +92,7 @@ class _MembersScreenState extends State<MembersScreen> {
                   }
 
                   if (state is! MemberLoaded) return const SizedBox();
-                        var members = state.members;
+                  var members = state.members;
 
                   if (_searchController.text.isNotEmpty) {
                     members = state.searchMembers(_searchController.text);
@@ -150,75 +153,80 @@ class _MembersScreenState extends State<MembersScreen> {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Thêm thành viên mới'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: fullNameController,
-                decoration: const InputDecoration(
-                  labelText: 'Họ và tên *',
-                  border: OutlineInputBorder(),
-                ),
+      builder: (context) => DesktopDialog(
+        title: 'Thêm thành viên mới',
+        maxWidth: 700,
+        content: DesktopFormLayout(
+          columns: 2,
+          spacing: AppSizes.paddingMedium,
+          children: [
+            TextField(
+              controller: fullNameController,
+              decoration: const InputDecoration(
+                labelText: 'Họ và tên *',
+                border: OutlineInputBorder(),
               ),
-              const SizedBox(height: AppSizes.paddingMedium),
-              TextField(
-                controller: phoneController,
-                keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(
-                  labelText: 'Số điện thoại *',
-                  border: OutlineInputBorder(),
-                ),
+            ),
+            TextField(
+              controller: phoneController,
+              keyboardType: TextInputType.phone,
+              decoration: const InputDecoration(
+                labelText: 'Số điện thoại *',
+                border: OutlineInputBorder(),
               ),
-              const SizedBox(height: AppSizes.paddingMedium),
-              TextField(
-                controller: emailController,
-                keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  border: OutlineInputBorder(),
-                ),
+            ),
+            TextField(
+              controller: emailController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: const InputDecoration(
+                labelText: 'Email',
+                border: OutlineInputBorder(),
               ),
-              const SizedBox(height: AppSizes.paddingMedium),
-              TextField(
-                controller: addressController,
-                maxLines: 2,
-                decoration: const InputDecoration(
-                  labelText: 'Địa chỉ',
-                  border: OutlineInputBorder(),
-                ),
+            ),
+            DropdownButtonFormField<String>(
+              value: membershipType,
+              decoration: const InputDecoration(
+                labelText: 'Loại thành viên',
+                border: OutlineInputBorder(),
               ),
-              const SizedBox(height: AppSizes.paddingMedium),
-              DropdownButtonFormField<String>(
-                value: membershipType,
-                decoration: const InputDecoration(
-                  labelText: 'Loại thành viên',
-                  border: OutlineInputBorder(),
-                ),
-                items: [
-                  DropdownMenuItem(
-                    value: 'standard',
-                    child: Text('${MembershipTypes.getTypeName('standard')} (0%)'),
+              items: [
+                DropdownMenuItem(
+                  value: 'standard',
+                  child: Text(
+                    '${MembershipTypes.getTypeName('standard')} (0%)',
                   ),
-                  DropdownMenuItem(
-                    value: 'silver',
-                    child: Text('${MembershipTypes.getTypeName('silver')} (5%)'),
+                ),
+                DropdownMenuItem(
+                  value: 'silver',
+                  child: Text('${MembershipTypes.getTypeName('silver')} (5%)'),
+                ),
+                DropdownMenuItem(
+                  value: 'gold',
+                  child: Text('${MembershipTypes.getTypeName('gold')} (10%)'),
+                ),
+                DropdownMenuItem(
+                  value: 'platinum',
+                  child: Text(
+                    '${MembershipTypes.getTypeName('platinum')} (15%)',
                   ),
-                  DropdownMenuItem(
-                    value: 'gold',
-                    child: Text('${MembershipTypes.getTypeName('gold')} (10%)'),
+                ),
+              ],
+              onChanged: (value) => membershipType = value!,
+            ),
+            // Full width address
+            Column(
+              children: [
+                TextField(
+                  controller: addressController,
+                  maxLines: 2,
+                  decoration: const InputDecoration(
+                    labelText: 'Địa chỉ',
+                    border: OutlineInputBorder(),
                   ),
-                  DropdownMenuItem(
-                    value: 'platinum',
-                    child: Text('${MembershipTypes.getTypeName('platinum')} (15%)'),
-                  ),
-                ],
-                onChanged: (value) => membershipType = value!,
-              ),
-            ],
-          ),
+                ),
+              ],
+            ),
+          ],
         ),
         actions: [
           TextButton(
@@ -233,18 +241,19 @@ class _MembersScreenState extends State<MembersScreen> {
                   id: const Uuid().v4(),
                   fullName: fullNameController.text,
                   phone: phoneController.text,
-                  email:
-                      emailController.text.isEmpty ? null : emailController.text,
+                  email: emailController.text.isEmpty
+                      ? null
+                      : emailController.text,
                   address: addressController.text.isEmpty
                       ? null
                       : addressController.text,
                   registrationDate: DateTime.now(),
                   membershipType: membershipType,
-                  discountRate: MembershipTypes.discountRates[membershipType] ?? 0,
+                  discountRate:
+                      MembershipTypes.discountRates[membershipType] ?? 0,
                 );
 
-                await context.read<MemberCubit>()
-                    .addMember(member);
+                await context.read<MemberCubit>().addMember(member);
 
                 if (context.mounted) {
                   Navigator.pop(context);
@@ -257,9 +266,7 @@ class _MembersScreenState extends State<MembersScreen> {
                 }
               }
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
             child: const Text('Thêm'),
           ),
         ],
@@ -278,86 +285,94 @@ class _MembersScreenState extends State<MembersScreen> {
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: const Text('Chỉnh sửa thành viên'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: fullNameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Họ và tên',
-                    border: OutlineInputBorder(),
-                  ),
+        builder: (context, setState) => DesktopDialog(
+          title: 'Chỉnh sửa thành viên',
+          maxWidth: 700,
+          content: DesktopFormLayout(
+            columns: 2,
+            spacing: AppSizes.paddingMedium,
+            children: [
+              TextField(
+                controller: fullNameController,
+                decoration: const InputDecoration(
+                  labelText: 'Họ và tên',
+                  border: OutlineInputBorder(),
                 ),
-                const SizedBox(height: AppSizes.paddingMedium),
-                TextField(
-                  controller: phoneController,
-                  keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(
-                    labelText: 'Số điện thoại',
-                    border: OutlineInputBorder(),
-                  ),
+              ),
+              TextField(
+                controller: phoneController,
+                keyboardType: TextInputType.phone,
+                decoration: const InputDecoration(
+                  labelText: 'Số điện thoại',
+                  border: OutlineInputBorder(),
                 ),
-                const SizedBox(height: AppSizes.paddingMedium),
-                TextField(
-                  controller: emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    border: OutlineInputBorder(),
-                  ),
+              ),
+              TextField(
+                controller: emailController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: const InputDecoration(
+                  labelText: 'Email',
+                  border: OutlineInputBorder(),
                 ),
-                const SizedBox(height: AppSizes.paddingMedium),
-                TextField(
-                  controller: addressController,
-                  maxLines: 2,
-                  decoration: const InputDecoration(
-                    labelText: 'Địa chỉ',
-                    border: OutlineInputBorder(),
-                  ),
+              ),
+              DropdownButtonFormField<String>(
+                value: membershipType,
+                decoration: const InputDecoration(
+                  labelText: 'Loại thành viên',
+                  border: OutlineInputBorder(),
                 ),
-                const SizedBox(height: AppSizes.paddingMedium),
-                DropdownButtonFormField<String>(
-                  value: membershipType,
-                  decoration: const InputDecoration(
-                    labelText: 'Loại thành viên',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: [
-                    DropdownMenuItem(
-                      value: 'standard',
-                      child: Text('${MembershipTypes.getTypeName('standard')} (0%)'),
+                items: [
+                  DropdownMenuItem(
+                    value: 'standard',
+                    child: Text(
+                      '${MembershipTypes.getTypeName('standard')} (0%)',
                     ),
-                    DropdownMenuItem(
-                      value: 'silver',
-                      child: Text('${MembershipTypes.getTypeName('silver')} (5%)'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'silver',
+                    child: Text(
+                      '${MembershipTypes.getTypeName('silver')} (5%)',
                     ),
-                    DropdownMenuItem(
-                      value: 'gold',
-                      child: Text('${MembershipTypes.getTypeName('gold')} (10%)'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'gold',
+                    child: Text('${MembershipTypes.getTypeName('gold')} (10%)'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'platinum',
+                    child: Text(
+                      '${MembershipTypes.getTypeName('platinum')} (15%)',
                     ),
-                    DropdownMenuItem(
-                      value: 'platinum',
-                      child:
-                          Text('${MembershipTypes.getTypeName('platinum')} (15%)'),
+                  ),
+                ],
+                onChanged: (value) {
+                  setState(() => membershipType = value!);
+                },
+              ),
+              // Full width address and switch
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  TextField(
+                    controller: addressController,
+                    maxLines: 2,
+                    decoration: const InputDecoration(
+                      labelText: 'Địa chỉ',
+                      border: OutlineInputBorder(),
                     ),
-                  ],
-                  onChanged: (value) {
-                    setState(() => membershipType = value!);
-                  },
-                ),
-                const SizedBox(height: AppSizes.paddingMedium),
-                SwitchListTile(
-                  title: const Text('Hoạt động'),
-                  value: isActive,
-                  onChanged: (value) {
-                    setState(() => isActive = value);
-                  },
-                ),
-              ],
-            ),
+                  ),
+                  const SizedBox(height: AppSizes.paddingMedium),
+                  SwitchListTile(
+                    title: const Text('Hoạt động'),
+                    value: isActive,
+                    onChanged: (value) {
+                      setState(() => isActive = value);
+                    },
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ],
+              ),
+            ],
           ),
           actions: [
             TextButton(
@@ -369,18 +384,19 @@ class _MembersScreenState extends State<MembersScreen> {
                 final updatedMember = member.copyWith(
                   fullName: fullNameController.text,
                   phone: phoneController.text,
-                  email:
-                      emailController.text.isEmpty ? null : emailController.text,
+                  email: emailController.text.isEmpty
+                      ? null
+                      : emailController.text,
                   address: addressController.text.isEmpty
                       ? null
                       : addressController.text,
                   membershipType: membershipType,
-                  discountRate: MembershipTypes.discountRates[membershipType] ?? 0,
+                  discountRate:
+                      MembershipTypes.discountRates[membershipType] ?? 0,
                   isActive: isActive,
                 );
 
-                await context.read<MemberCubit>()
-                    .updateMember(updatedMember);
+                await context.read<MemberCubit>().updateMember(updatedMember);
 
                 if (context.mounted) {
                   Navigator.pop(context);
@@ -416,8 +432,7 @@ class _MembersScreenState extends State<MembersScreen> {
           ),
           ElevatedButton(
             onPressed: () async {
-              await context.read<MemberCubit>()
-                  .deleteMember(member.id);
+              await context.read<MemberCubit>().deleteMember(member.id);
 
               if (context.mounted) {
                 Navigator.pop(context);
@@ -429,9 +444,7 @@ class _MembersScreenState extends State<MembersScreen> {
                 );
               }
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.danger,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
             child: const Text('Xóa'),
           ),
         ],
@@ -651,4 +664,3 @@ class _MemberCard extends StatelessWidget {
     );
   }
 }
-

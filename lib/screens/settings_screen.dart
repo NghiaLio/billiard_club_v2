@@ -5,6 +5,8 @@ import '../cubits/invoice/invoice_cubit.dart';
 import '../cubits/invoice/invoice_state.dart';
 import '../utils/constants.dart';
 import '../utils/formatters.dart';
+import 'zones_management_screen.dart';
+import 'promotions_management_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -51,10 +53,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     onTap: () => setState(() => _selectedTab = 1),
                   ),
                   _TabItem(
-                    icon: Icons.info,
-                    label: 'Thông tin',
+                    icon: Icons.location_city,
+                    label: 'Khu vực',
                     isSelected: _selectedTab == 2,
                     onTap: () => setState(() => _selectedTab = 2),
+                  ),
+                  _TabItem(
+                    icon: Icons.local_offer,
+                    label: 'Ưu đãi',
+                    isSelected: _selectedTab == 3,
+                    onTap: () => setState(() => _selectedTab = 3),
+                  ),
+                  _TabItem(
+                    icon: Icons.info,
+                    label: 'Thông tin',
+                    isSelected: _selectedTab == 4,
+                    onTap: () => setState(() => _selectedTab = 4),
                   ),
                 ],
               ),
@@ -77,6 +91,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       case 1:
         return const _InvoicesTab();
       case 2:
+        return const _ZonesTab();
+      case 3:
+        return const _PromotionsTab();
+      case 4:
         return const _InfoTab();
       default:
         return const _RevenueTab();
@@ -726,6 +744,24 @@ class _FeatureItem extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class _ZonesTab extends StatelessWidget {
+  const _ZonesTab();
+
+  @override
+  Widget build(BuildContext context) {
+    return const ZonesManagementScreen();
+  }
+}
+
+class _PromotionsTab extends StatelessWidget {
+  const _PromotionsTab();
+
+  @override
+  Widget build(BuildContext context) {
+    return const PromotionsManagementScreen();
   }
 }
 

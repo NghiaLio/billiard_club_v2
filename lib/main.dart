@@ -7,6 +7,8 @@ import 'cubits/product/product_cubit.dart';
 import 'cubits/order/order_cubit.dart';
 import 'cubits/invoice/invoice_cubit.dart';
 import 'cubits/user/user_cubit.dart';
+import 'cubits/zone/zone_cubit.dart';
+import 'cubits/promotion/promotion_cubit.dart';
 import 'screens/login_screen.dart';
 import 'utils/constants.dart';
 
@@ -28,6 +30,8 @@ class MyApp extends StatelessWidget {
         BlocProvider(create: (_) => OrderCubit()),
         BlocProvider(create: (_) => InvoiceCubit()),
         BlocProvider(create: (_) => UserCubit()),
+        BlocProvider(create: (_) => ZoneCubit()),
+        BlocProvider(create: (_) => PromotionCubit()),
       ],
       child: MaterialApp(
         title: 'Quản lý Billiard Club',

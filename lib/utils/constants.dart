@@ -167,3 +167,26 @@ class PaymentMethods {
   }
 }
 
+class TableTypes {
+  static const List<String> types = [
+    'Rasson',
+    'MrSung',
+    'Aliex Crown',
+    'Predator Arc',
+    'Dinamon',
+    'Chinese Pool',
+  ];
+}
+
+class TableZones {
+  static const List<String> zones = [
+    'Zone 1',
+    'Zone 2',
+    'Zone 3',
+    'Zone 4',
+    'VIP 1',
+    'VIP 2',
+    'VVIP',
+  ];
+}
+

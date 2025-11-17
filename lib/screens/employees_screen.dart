@@ -7,6 +7,7 @@ import '../cubits/user/user_state.dart';
 import '../models/user.dart';
 import '../utils/constants.dart';
 import '../utils/formatters.dart';
+import '../widgets/desktop_dialog.dart';
 
 class EmployeesScreen extends StatefulWidget {
   const EmployeesScreen({super.key});
@@ -37,7 +38,9 @@ class _EmployeesScreenState extends State<EmployeesScreen> {
         elevation: 0,
         actions: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSizes.paddingMedium,
+            ),
             child: ElevatedButton.icon(
               onPressed: () => _showAddEmployeeDialog(context),
               icon: const Icon(Icons.add),
@@ -110,69 +113,64 @@ class _EmployeesScreenState extends State<EmployeesScreen> {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Thêm nhân viên mới'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: fullNameController,
-                decoration: const InputDecoration(
-                  labelText: 'Họ và tên',
-                  border: OutlineInputBorder(),
-                ),
+      builder: (context) => DesktopDialog(
+        title: 'Thêm nhân viên mới',
+        maxWidth: 700,
+        content: DesktopFormLayout(
+          columns: 2,
+          spacing: AppSizes.paddingMedium,
+          children: [
+            TextField(
+              controller: fullNameController,
+              decoration: const InputDecoration(
+                labelText: 'Họ và tên *',
+                border: OutlineInputBorder(),
               ),
-              const SizedBox(height: AppSizes.paddingMedium),
-              TextField(
-                controller: usernameController,
-                decoration: const InputDecoration(
-                  labelText: 'Tên đăng nhập',
-                  border: OutlineInputBorder(),
-                ),
+            ),
+            TextField(
+              controller: usernameController,
+              decoration: const InputDecoration(
+                labelText: 'Tên đăng nhập *',
+                border: OutlineInputBorder(),
               ),
-              const SizedBox(height: AppSizes.paddingMedium),
-              TextField(
-                controller: passwordController,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Mật khẩu',
-                  border: OutlineInputBorder(),
-                ),
+            ),
+            TextField(
+              controller: passwordController,
+              obscureText: true,
+              decoration: const InputDecoration(
+                labelText: 'Mật khẩu *',
+                border: OutlineInputBorder(),
               ),
-              const SizedBox(height: AppSizes.paddingMedium),
-              TextField(
-                controller: phoneController,
-                keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(
-                  labelText: 'Số điện thoại',
-                  border: OutlineInputBorder(),
-                ),
+            ),
+            TextField(
+              controller: phoneController,
+              keyboardType: TextInputType.phone,
+              decoration: const InputDecoration(
+                labelText: 'Số điện thoại',
+                border: OutlineInputBorder(),
               ),
-              const SizedBox(height: AppSizes.paddingMedium),
-              TextField(
-                controller: emailController,
-                keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  border: OutlineInputBorder(),
-                ),
+            ),
+            TextField(
+              controller: emailController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: const InputDecoration(
+                labelText: 'Email',
+                border: OutlineInputBorder(),
               ),
-              const SizedBox(height: AppSizes.paddingMedium),
-              DropdownButtonFormField<String>(
-                value: role,
-                decoration: const InputDecoration(
-                  labelText: 'Vai trò',
-                  border: OutlineInputBorder(),
-                ),
-                items: const [
-                  DropdownMenuItem(value: 'manager', child: Text('Quản lý')),
-                  DropdownMenuItem(value: 'employee', child: Text('Nhân viên')),
-                ],
-                onChanged: (value) => role = value!,
+            ),
+            DropdownButtonFormField<String>(
+              value: role,
+              decoration: const InputDecoration(
+                labelText: 'Vai trò',
+                border: OutlineInputBorder(),
               ),
-            ],
-          ),
+              items: const [
+                DropdownMenuItem(value: 'manager', child: Text('Quản lý')),
+                DropdownMenuItem(value: 'employee', child: Text('Nhân viên')),
+              ],
+              onChanged: (value) => role = value!,
+            ),
+          ],
         ),
         actions: [
           TextButton(
@@ -190,8 +188,12 @@ class _EmployeesScreenState extends State<EmployeesScreen> {
                   password: passwordController.text,
                   fullName: fullNameController.text,
                   role: role,
-                  phone: phoneController.text.isEmpty ? null : phoneController.text,
-                  email: emailController.text.isEmpty ? null : emailController.text,
+                  phone: phoneController.text.isEmpty
+                      ? null
+                      : phoneController.text,
+                  email: emailController.text.isEmpty
+                      ? null
+                      : emailController.text,
                   createdAt: DateTime.now(),
                 );
 
@@ -208,9 +210,7 @@ class _EmployeesScreenState extends State<EmployeesScreen> {
                 }
               }
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
             child: const Text('Thêm'),
           ),
         ],
@@ -228,62 +228,65 @@ class _EmployeesScreenState extends State<EmployeesScreen> {
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: const Text('Chỉnh sửa nhân viên'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: fullNameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Họ và tên',
-                    border: OutlineInputBorder(),
+        builder: (context, setState) => DesktopDialog(
+          title: 'Chỉnh sửa nhân viên',
+          maxWidth: 700,
+          content: DesktopFormLayout(
+            columns: 2,
+            spacing: AppSizes.paddingMedium,
+            children: [
+              TextField(
+                controller: fullNameController,
+                decoration: const InputDecoration(
+                  labelText: 'Họ và tên',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              TextField(
+                controller: phoneController,
+                keyboardType: TextInputType.phone,
+                decoration: const InputDecoration(
+                  labelText: 'Số điện thoại',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              TextField(
+                controller: emailController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: const InputDecoration(
+                  labelText: 'Email',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              DropdownButtonFormField<String>(
+                value: role,
+                decoration: const InputDecoration(
+                  labelText: 'Vai trò',
+                  border: OutlineInputBorder(),
+                ),
+                items: const [
+                  DropdownMenuItem(value: 'manager', child: Text('Quản lý')),
+                  DropdownMenuItem(value: 'employee', child: Text('Nhân viên')),
+                ],
+                onChanged: (value) {
+                  setState(() => role = value!);
+                },
+              ),
+              // Full width switch
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SwitchListTile(
+                    title: const Text('Hoạt động'),
+                    value: isActive,
+                    onChanged: (value) {
+                      setState(() => isActive = value);
+                    },
+                    contentPadding: EdgeInsets.zero,
                   ),
-                ),
-                const SizedBox(height: AppSizes.paddingMedium),
-                TextField(
-                  controller: phoneController,
-                  keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(
-                    labelText: 'Số điện thoại',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: AppSizes.paddingMedium),
-                TextField(
-                  controller: emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: AppSizes.paddingMedium),
-                DropdownButtonFormField<String>(
-                  value: role,
-                  decoration: const InputDecoration(
-                    labelText: 'Vai trò',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: const [
-                    DropdownMenuItem(value: 'manager', child: Text('Quản lý')),
-                    DropdownMenuItem(value: 'employee', child: Text('Nhân viên')),
-                  ],
-                  onChanged: (value) {
-                    setState(() => role = value!);
-                  },
-                ),
-                const SizedBox(height: AppSizes.paddingMedium),
-                SwitchListTile(
-                  title: const Text('Hoạt động'),
-                  value: isActive,
-                  onChanged: (value) {
-                    setState(() => isActive = value);
-                  },
-                ),
-              ],
-            ),
+                ],
+              ),
+            ],
           ),
           actions: [
             TextButton(
@@ -294,14 +297,17 @@ class _EmployeesScreenState extends State<EmployeesScreen> {
               onPressed: () async {
                 final updatedUser = user.copyWith(
                   fullName: fullNameController.text,
-                  phone: phoneController.text.isEmpty ? null : phoneController.text,
-                  email: emailController.text.isEmpty ? null : emailController.text,
+                  phone: phoneController.text.isEmpty
+                      ? null
+                      : phoneController.text,
+                  email: emailController.text.isEmpty
+                      ? null
+                      : emailController.text,
                   role: role,
                   isActive: isActive,
                 );
 
-                await context.read<UserCubit>()
-                    .updateUser(updatedUser);
+                await context.read<UserCubit>().updateUser(updatedUser);
 
                 if (context.mounted) {
                   Navigator.pop(context);
@@ -337,8 +343,7 @@ class _EmployeesScreenState extends State<EmployeesScreen> {
           ),
           ElevatedButton(
             onPressed: () async {
-              await context.read<UserCubit>()
-                  .deleteUser(user.id);
+              await context.read<UserCubit>().deleteUser(user.id);
 
               if (context.mounted) {
                 Navigator.pop(context);
@@ -350,9 +355,7 @@ class _EmployeesScreenState extends State<EmployeesScreen> {
                 );
               }
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.danger,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
             child: const Text('Xóa'),
           ),
         ],
@@ -392,7 +395,9 @@ class _EmployeeCard extends StatelessWidget {
               child: Icon(
                 Icons.person,
                 size: 30,
-                color: user.isActive ? AppColors.primary : AppColors.textSecondary,
+                color: user.isActive
+                    ? AppColors.primary
+                    : AppColors.textSecondary,
               ),
             ),
             const SizedBox(width: AppSizes.paddingMedium),
@@ -533,4 +538,3 @@ class _EmployeeCard extends StatelessWidget {
     );
   }
 }
-

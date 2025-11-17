@@ -1,7 +1,8 @@
 class BilliardTable {
   final String id;
   final String tableName;
-  final String tableType; // 'pool', 'snooker', 'carom'
+  final String tableType; // Brand: 'Rasson', 'MrSung', etc.
+  final String zone; // Zone: 'Zone 1', 'VIP 1', 'VVIP', etc.
   final double pricePerHour;
   final String status; // 'available', 'occupied', 'reserved', 'maintenance'
   final DateTime? startTime;
@@ -13,6 +14,7 @@ class BilliardTable {
     required this.id,
     required this.tableName,
     required this.tableType,
+    required this.zone,
     required this.pricePerHour,
     this.status = 'available',
     this.startTime,
@@ -26,6 +28,7 @@ class BilliardTable {
       'id': id,
       'table_name': tableName,
       'table_type': tableType,
+      'zone': zone,
       'price_per_hour': pricePerHour,
       'status': status,
       'start_time': startTime?.toIso8601String(),
@@ -40,10 +43,12 @@ class BilliardTable {
       id: map['id'],
       tableName: map['table_name'],
       tableType: map['table_type'],
+      zone: map['zone'] ?? 'Zone 1', // Default value for existing data
       pricePerHour: map['price_per_hour'],
       status: map['status'] ?? 'available',
-      startTime:
-          map['start_time'] != null ? DateTime.parse(map['start_time']) : null,
+      startTime: map['start_time'] != null
+          ? DateTime.parse(map['start_time'])
+          : null,
       currentSessionId: map['current_session_id'],
       reservedBy: map['reserved_by'],
       reservationTime: map['reservation_time'] != null
@@ -56,23 +61,33 @@ class BilliardTable {
     String? id,
     String? tableName,
     String? tableType,
+    String? zone,
     double? pricePerHour,
     String? status,
-    DateTime? startTime,
-    String? currentSessionId,
-    String? reservedBy,
-    DateTime? reservationTime,
+    Object? startTime = _undefined,
+    Object? currentSessionId = _undefined,
+    Object? reservedBy = _undefined,
+    Object? reservationTime = _undefined,
   }) {
     return BilliardTable(
       id: id ?? this.id,
       tableName: tableName ?? this.tableName,
       tableType: tableType ?? this.tableType,
+      zone: zone ?? this.zone,
       pricePerHour: pricePerHour ?? this.pricePerHour,
       status: status ?? this.status,
-      startTime: startTime ?? this.startTime,
-      currentSessionId: currentSessionId ?? this.currentSessionId,
-      reservedBy: reservedBy ?? this.reservedBy,
-      reservationTime: reservationTime ?? this.reservationTime,
+      startTime: identical(startTime, _undefined)
+          ? this.startTime
+          : startTime as DateTime?,
+      currentSessionId: identical(currentSessionId, _undefined)
+          ? this.currentSessionId
+          : currentSessionId as String?,
+      reservedBy: identical(reservedBy, _undefined)
+          ? this.reservedBy
+          : reservedBy as String?,
+      reservationTime: identical(reservationTime, _undefined)
+          ? this.reservationTime
+          : reservationTime as DateTime?,
     );
   }
 
@@ -89,3 +104,4 @@ class BilliardTable {
   }
 }
 
+const Object _undefined = Object();

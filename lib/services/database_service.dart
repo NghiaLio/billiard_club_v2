@@ -8,6 +8,8 @@ import '../models/billiard_table.dart';
 import '../models/product.dart';
 import '../models/order.dart';
 import '../models/invoice.dart';
+import '../models/zone.dart';
+import '../models/promotion.dart';
 
 class DatabaseService {
   static final DatabaseService instance = DatabaseService._init();
@@ -33,9 +35,79 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 4,
       onCreate: _createDB,
+      onUpgrade: _upgradeDB,
     );
+  }
+
+  Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      // Add zone column to billiard_tables
+      await db.execute('ALTER TABLE billiard_tables ADD COLUMN zone TEXT NOT NULL DEFAULT "Zone 1"');
+    }
+    if (oldVersion < 3) {
+      // Create zones table
+      await db.execute('''
+        CREATE TABLE zones (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL UNIQUE,
+          description TEXT,
+          sort_order INTEGER NOT NULL DEFAULT 0,
+          is_active INTEGER NOT NULL DEFAULT 1,
+          created_at TEXT NOT NULL
+        )
+      ''');
+      
+      // Insert default zones
+      final defaultZones = [
+        {'name': 'Zone 1', 'order': 1},
+        {'name': 'Zone 2', 'order': 2},
+        {'name': 'Zone 3', 'order': 3},
+        {'name': 'Zone 4', 'order': 4},
+        {'name': 'VIP 1', 'order': 5},
+        {'name': 'VIP 2', 'order': 6},
+        {'name': 'VVIP', 'order': 7},
+      ];
+      
+      int index = 1;
+      for (var zone in defaultZones) {
+        await db.insert('zones', {
+          'id': 'zone-$index',
+          'name': zone['name'],
+          'description': null,
+          'sort_order': zone['order'],
+          'is_active': 1,
+          'created_at': DateTime.now().toIso8601String(),
+        });
+        index++;
+      }
+    }
+    if (oldVersion < 4) {
+      // Create promotions table
+      await db.execute('''
+        CREATE TABLE promotions (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          description TEXT NOT NULL,
+          type TEXT NOT NULL,
+          value REAL NOT NULL,
+          applicable_table_types TEXT,
+          applicable_zones TEXT,
+          applicable_membership_type TEXT,
+          day_of_week TEXT,
+          start_time TEXT,
+          end_time TEXT,
+          valid_from TEXT,
+          valid_to TEXT,
+          min_amount REAL,
+          min_playing_hours REAL,
+          is_active INTEGER NOT NULL DEFAULT 1,
+          priority INTEGER NOT NULL DEFAULT 0,
+          created_at TEXT NOT NULL
+        )
+      ''');
+    }
   }
 
   Future<void> _createDB(Database db, int version) async {
@@ -76,6 +148,7 @@ class DatabaseService {
         id TEXT PRIMARY KEY,
         table_name TEXT NOT NULL,
         table_type TEXT NOT NULL,
+        zone TEXT NOT NULL DEFAULT 'Zone 1',
         price_per_hour REAL NOT NULL,
         status TEXT NOT NULL DEFAULT 'available',
         start_time TEXT,
@@ -154,6 +227,42 @@ class DatabaseService {
       )
     ''');
 
+    // Zones table
+    await db.execute('''
+      CREATE TABLE zones (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL UNIQUE,
+        description TEXT,
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        is_active INTEGER NOT NULL DEFAULT 1,
+        created_at TEXT NOT NULL
+      )
+    ''');
+
+    // Promotions table
+    await db.execute('''
+      CREATE TABLE promotions (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        description TEXT NOT NULL,
+        type TEXT NOT NULL,
+        value REAL NOT NULL,
+        applicable_table_types TEXT,
+        applicable_zones TEXT,
+        applicable_membership_type TEXT,
+        day_of_week TEXT,
+        start_time TEXT,
+        end_time TEXT,
+        valid_from TEXT,
+        valid_to TEXT,
+        min_amount REAL,
+        min_playing_hours REAL,
+        is_active INTEGER NOT NULL DEFAULT 1,
+        priority INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL
+      )
+    ''');
+
     // Insert default admin user
     await db.insert('users', {
       'id': 'admin-001',
@@ -169,11 +278,15 @@ class DatabaseService {
 
     // Insert sample billiard tables
     final now = DateTime.now().toIso8601String();
+    final tableTypes = ['Rasson', 'MrSung', 'Aliex Crown', 'Predator Arc', 'Dinamon', 'Chinese Pool'];
+    final zones = ['Zone 1', 'Zone 2', 'Zone 3', 'Zone 4', 'VIP 1', 'VIP 2', 'VVIP'];
+    
     for (int i = 1; i <= 10; i++) {
       await db.insert('billiard_tables', {
         'id': 'table-$i',
         'table_name': 'Bàn $i',
-        'table_type': i <= 6 ? 'pool' : (i <= 8 ? 'snooker' : 'carom'),
+        'table_type': tableTypes[i % tableTypes.length],
+        'zone': zones[i % zones.length],
         'price_per_hour': i <= 6 ? 50000.0 : (i <= 8 ? 80000.0 : 100000.0),
         'status': 'available',
       });
@@ -205,6 +318,30 @@ class DatabaseService {
         'created_at': now,
       });
       productIndex++;
+    }
+
+    // Insert default zones
+    final defaultZones = [
+      {'name': 'Zone 1', 'order': 1},
+      {'name': 'Zone 2', 'order': 2},
+      {'name': 'Zone 3', 'order': 3},
+      {'name': 'Zone 4', 'order': 4},
+      {'name': 'VIP 1', 'order': 5},
+      {'name': 'VIP 2', 'order': 6},
+      {'name': 'VVIP', 'order': 7},
+    ];
+
+    int zoneIndex = 1;
+    for (var zone in defaultZones) {
+      await db.insert('zones', {
+        'id': 'zone-$zoneIndex',
+        'name': zone['name'],
+        'description': null,
+        'sort_order': zone['order'],
+        'is_active': 1,
+        'created_at': now,
+      });
+      zoneIndex++;
     }
   }
 
@@ -425,6 +562,100 @@ class DatabaseService {
       orderBy: 'created_at DESC',
     );
     return result.map((map) => Invoice.fromMap(map)).toList();
+  }
+
+  // Zone operations
+  Future<List<Zone>> getAllZones() async {
+    final db = await database;
+    final result = await db.query('zones', orderBy: 'sort_order ASC');
+    return result.map((map) => Zone.fromMap(map)).toList();
+  }
+
+  Future<List<Zone>> getActiveZones() async {
+    final db = await database;
+    final result = await db.query(
+      'zones',
+      where: 'is_active = ?',
+      whereArgs: [1],
+      orderBy: 'sort_order ASC',
+    );
+    return result.map((map) => Zone.fromMap(map)).toList();
+  }
+
+  Future<Zone?> getZoneById(String id) async {
+    final db = await database;
+    final result = await db.query('zones', where: 'id = ?', whereArgs: [id]);
+    if (result.isNotEmpty) {
+      return Zone.fromMap(result.first);
+    }
+    return null;
+  }
+
+  Future<void> insertZone(Zone zone) async {
+    final db = await database;
+    await db.insert('zones', zone.toMap());
+  }
+
+  Future<void> updateZone(Zone zone) async {
+    final db = await database;
+    await db.update(
+      'zones',
+      zone.toMap(),
+      where: 'id = ?',
+      whereArgs: [zone.id],
+    );
+  }
+
+  Future<void> deleteZone(String id) async {
+    final db = await database;
+    await db.delete('zones', where: 'id = ?', whereArgs: [id]);
+  }
+
+  // Promotion operations
+  Future<List<Promotion>> getAllPromotions() async {
+    final db = await database;
+    final result = await db.query('promotions', orderBy: 'priority DESC, created_at DESC');
+    return result.map((map) => Promotion.fromMap(map)).toList();
+  }
+
+  Future<List<Promotion>> getActivePromotions() async {
+    final db = await database;
+    final result = await db.query(
+      'promotions',
+      where: 'is_active = ?',
+      whereArgs: [1],
+      orderBy: 'priority DESC, created_at DESC',
+    );
+    return result.map((map) => Promotion.fromMap(map)).toList();
+  }
+
+  Future<Promotion?> getPromotionById(String id) async {
+    final db = await database;
+    final result = await db.query('promotions', where: 'id = ?', whereArgs: [id]);
+    if (result.isNotEmpty) {
+      return Promotion.fromMap(result.first);
+    }
+    return null;
+  }
+
+  Future<void> insertPromotion(Promotion promotion) async {
+    final db = await database;
+    await db.insert('promotions', promotion.toMap());
+  }
+
+  Future<void> updatePromotion(Promotion promotion) async {
+    final db = await database;
+    await db.update(
+      'promotions',
+      promotion.toMap(),
+      where: 'id = ?',
+      whereArgs: [promotion.id],
+    );
+  }
+
+  Future<void> deletePromotion(String id) async {
+    final db = await database;
+    await db.delete('promotions', where: 'id = ?', whereArgs: [id]);
   }
 
   Future<void> close() async {

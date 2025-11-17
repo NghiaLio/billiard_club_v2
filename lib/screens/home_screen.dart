@@ -42,167 +42,210 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Row(
-        children: [
-          // Sidebar
-          NavigationRail(
-            selectedIndex: _selectedIndex,
-            onDestinationSelected: (index) {
-              setState(() {
-                _selectedIndex = index;
-              });
-            },
-            extended: MediaQuery.of(context).size.width > 800,
-            backgroundColor: AppColors.primary,
-            selectedIconTheme: const IconThemeData(
-              color: Colors.white,
-              size: 28,
-            ),
-            unselectedIconTheme: IconThemeData(
-              color: Colors.white.withOpacity(0.7),
-              size: 24,
-            ),
-            selectedLabelTextStyle: AppTextStyles.roboto(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-            ),
-            unselectedLabelTextStyle: AppTextStyles.roboto(
-              color: Colors.white.withOpacity(0.7),
-              fontSize: 14,
-            ),
-            leading: Column(
-              children: [
-                const SizedBox(height: 20),
-                const Icon(
-                  Icons.sports_baseball,
-                  size: 48,
-                  color: Colors.white,
-                ),
-                const SizedBox(height: 8),
-                if (MediaQuery.of(context).size.width > 800)
-                  Text(
-                    'BILLIARD CLUB',
-                    style: AppTextStyles.roboto(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
+    // ignore: deprecated_member_use
+    return WillPopScope(
+      onWillPop: _handleAppExit,
+      child: Scaffold(
+        body: Row(
+          children: [
+            // Sidebar
+            NavigationRail(
+              selectedIndex: _selectedIndex,
+              onDestinationSelected: (index) {
+                setState(() {
+                  _selectedIndex = index;
+                });
+              },
+              extended: MediaQuery.of(context).size.width > 800,
+              backgroundColor: AppColors.primary,
+              selectedIconTheme: const IconThemeData(
+                color: Colors.white,
+                size: 28,
+              ),
+              unselectedIconTheme: IconThemeData(
+                color: Colors.white.withOpacity(0.7),
+                size: 24,
+              ),
+              selectedLabelTextStyle: AppTextStyles.roboto(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+              unselectedLabelTextStyle: AppTextStyles.roboto(
+                color: Colors.white.withOpacity(0.7),
+                fontSize: 14,
+              ),
+              leading: Column(
+                children: [
+                  const SizedBox(height: 20),
+                  const Icon(
+                    Icons.sports_baseball,
+                    size: 48,
+                    color: Colors.white,
                   ),
-                const SizedBox(height: 20),
-                const Divider(color: Colors.white54),
-              ],
-            ),
-            trailing: Expanded(
-              child: Align(
-                alignment: Alignment.bottomCenter,
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 20),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Divider(color: Colors.white54),
-                      const SizedBox(height: 10),
-                      const CircleAvatar(
-                        backgroundColor: Colors.white,
-                        child: Icon(
-                          Icons.person,
-                          color: AppColors.primary,
-                        ),
+                  const SizedBox(height: 8),
+                  if (MediaQuery.of(context).size.width > 800)
+                    Text(
+                      'BILLIARD CLUB',
+                      style: AppTextStyles.roboto(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
                       ),
-                      if (MediaQuery.of(context).size.width > 800) ...[
-                        const SizedBox(height: 8),
-                        BlocBuilder<AuthCubit, AuthState>(
-                          builder: (context, state) {
-                            final userName = state is AuthAuthenticated
-                                ? state.user.fullName
-                                : '';
-                            final userRole = state is AuthAuthenticated
-                                ? (state.user.role == 'manager'
-                                    ? 'Quản lý'
-                                    : 'Nhân viên')
-                                : '';
-                            return Column(
-                              children: [
-                                Text(
-                                  userName,
-                                  style: AppTextStyles.roboto(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 12,
+                    ),
+                  const SizedBox(height: 20),
+                  const Divider(color: Colors.white54),
+                ],
+              ),
+              trailing: Expanded(
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 20),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Divider(color: Colors.white54),
+                        const SizedBox(height: 10),
+                        const CircleAvatar(
+                          backgroundColor: Colors.white,
+                          child: Icon(Icons.person, color: AppColors.primary),
+                        ),
+                        if (MediaQuery.of(context).size.width > 800) ...[
+                          const SizedBox(height: 8),
+                          BlocBuilder<AuthCubit, AuthState>(
+                            builder: (context, state) {
+                              final userName = state is AuthAuthenticated
+                                  ? state.user.fullName
+                                  : '';
+                              final userRole = state is AuthAuthenticated
+                                  ? (state.user.role == 'manager'
+                                        ? 'Quản lý'
+                                        : 'Nhân viên')
+                                  : '';
+                              return Column(
+                                children: [
+                                  Text(
+                                    userName,
+                                    style: AppTextStyles.roboto(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                    ),
+                                    textAlign: TextAlign.center,
                                   ),
-                                  textAlign: TextAlign.center,
-                                ),
-                                Text(
-                                  userRole,
-                                  style: AppTextStyles.roboto(
-                                    color: Colors.white70,
-                                    fontSize: 11,
+                                  Text(
+                                    userRole,
+                                    style: AppTextStyles.roboto(
+                                      color: Colors.white70,
+                                      fontSize: 11,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              );
+                            },
+                          ),
+                        ],
+                        const SizedBox(height: 10),
+                        IconButton(
+                          icon: const Icon(Icons.logout, color: Colors.white),
+                          onPressed: () {
+                            context.read<AuthCubit>().logout();
+                            Navigator.of(context).pushReplacement(
+                              MaterialPageRoute(
+                                builder: (_) => const LoginScreen(),
+                              ),
                             );
                           },
+                          tooltip: 'Đăng xuất',
                         ),
                       ],
-                      const SizedBox(height: 10),
-                      IconButton(
-                        icon: const Icon(Icons.logout, color: Colors.white),
-                        onPressed: () {
-                          context.read<AuthCubit>().logout();
-                          Navigator.of(context).pushReplacement(
-                            MaterialPageRoute(
-                              builder: (_) => const LoginScreen(),
-                            ),
-                          );
-                        },
-                        tooltip: 'Đăng xuất',
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ),
+              destinations: const [
+                NavigationRailDestination(
+                  icon: Icon(Icons.dashboard),
+                  label: Text('Tổng quan'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.table_bar),
+                  label: Text('Quản lý bàn'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.point_of_sale),
+                  label: Text('Thu ngân'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.people),
+                  label: Text('Thành viên'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.inventory),
+                  label: Text('Hàng hóa'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.person),
+                  label: Text('Nhân viên'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.settings),
+                  label: Text('Cài đặt'),
+                ),
+              ],
             ),
-            destinations: const [
-              NavigationRailDestination(
-                icon: Icon(Icons.dashboard),
-                label: Text('Tổng quan'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.table_bar),
-                label: Text('Quản lý bàn'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.point_of_sale),
-                label: Text('Thu ngân'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.people),
-                label: Text('Thành viên'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.inventory),
-                label: Text('Hàng hóa'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.person),
-                label: Text('Nhân viên'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.settings),
-                label: Text('Cài đặt'),
-              ),
-            ],
+            const VerticalDivider(thickness: 1, width: 1),
+            // Main content
+            Expanded(child: _getSelectedScreen()),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<bool> _handleAppExit() async {
+    final tableCubit = context.read<TableCubit>();
+    final tableState = tableCubit.state;
+    if (tableState is! TableLoaded) {
+      return true;
+    }
+
+    final activeTables = tableState.tables
+        .where((table) => table.status != 'available')
+        .length;
+    if (activeTables == 0) {
+      return true;
+    }
+
+    final shouldExit = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Đóng ứng dụng'),
+        content: Text(
+          'Có $activeTables bàn chưa đưa về trạng thái ban đầu. Thoát ứng dụng '
+          'sẽ tự động đưa tất cả bàn về trạng thái trống. Bạn có chắc chắn muốn tiếp tục?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Huỷ'),
           ),
-          const VerticalDivider(thickness: 1, width: 1),
-          // Main content
-          Expanded(
-            child: _getSelectedScreen(),
+          ElevatedButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+            child: const Text('Đồng ý'),
           ),
         ],
       ),
     );
+
+    if (shouldExit == true) {
+      await tableCubit.resetAllTables();
+      return true;
+    }
+
+    return false;
   }
 
   Widget _getSelectedScreen() {
@@ -320,8 +363,9 @@ class DashboardScreen extends StatelessWidget {
                   final reservedCount = state is TableLoaded
                       ? state.reservedTables.length
                       : 0;
-                  final totalCount =
-                      state is TableLoaded ? state.tables.length : 0;
+                  final totalCount = state is TableLoaded
+                      ? state.tables.length
+                      : 0;
 
                   return Row(
                     children: [
