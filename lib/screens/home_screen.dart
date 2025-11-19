@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously, deprecated_member_use, duplicate_ignore
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../cubits/auth/auth_cubit.dart';
@@ -78,10 +80,10 @@ class _HomeScreenState extends State<HomeScreen> {
               leading: Column(
                 children: [
                   const SizedBox(height: 20),
-                  const Icon(
-                    Icons.sports_baseball,
-                    size: 48,
-                    color: Colors.white,
+                  Image.asset(
+                    'assets/images/istockphoto-483985318-170667a-removebg-preview.png',
+                    width: 160,
+                    height: 160,
                   ),
                   const SizedBox(height: 8),
                   if (MediaQuery.of(context).size.width > 800)
@@ -170,7 +172,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   label: Text('Tổng quan'),
                 ),
                 NavigationRailDestination(
-                  icon: Icon(Icons.table_bar),
+                  icon: Icon(Icons.table_restaurant),
                   label: Text('Quản lý bàn'),
                 ),
                 NavigationRailDestination(

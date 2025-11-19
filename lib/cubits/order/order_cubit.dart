@@ -9,7 +9,11 @@ class OrderCubit extends Cubit<OrderState> {
   OrderCubit() : super(const OrderState());
 
   void addItemToOrder(String tableId, Product product, int quantity) {
-    final currentOrders = Map<String, List<OrderItem>>.from(state.currentOrders);
+    // Deep copy the map and lists
+    final currentOrders = <String, List<OrderItem>>{};
+    state.currentOrders.forEach((key, value) {
+      currentOrders[key] = List<OrderItem>.from(value);
+    });
 
     if (!currentOrders.containsKey(tableId)) {
       currentOrders[tableId] = [];
@@ -45,7 +49,11 @@ class OrderCubit extends Cubit<OrderState> {
   }
 
   void removeItemFromOrder(String tableId, String itemId) {
-    final currentOrders = Map<String, List<OrderItem>>.from(state.currentOrders);
+    // Deep copy the map and lists
+    final currentOrders = <String, List<OrderItem>>{};
+    state.currentOrders.forEach((key, value) {
+      currentOrders[key] = List<OrderItem>.from(value);
+    });
 
     if (currentOrders.containsKey(tableId)) {
       currentOrders[tableId]!.removeWhere((item) => item.id == itemId);
@@ -54,7 +62,11 @@ class OrderCubit extends Cubit<OrderState> {
   }
 
   void updateItemQuantity(String tableId, String itemId, int newQuantity) {
-    final currentOrders = Map<String, List<OrderItem>>.from(state.currentOrders);
+    // Deep copy the map and lists
+    final currentOrders = <String, List<OrderItem>>{};
+    state.currentOrders.forEach((key, value) {
+      currentOrders[key] = List<OrderItem>.from(value);
+    });
 
     if (currentOrders.containsKey(tableId)) {
       final itemIndex = currentOrders[tableId]!.indexWhere(
@@ -103,7 +115,11 @@ class OrderCubit extends Cubit<OrderState> {
   }
 
   void clearOrderForTable(String tableId) {
-    final currentOrders = Map<String, List<OrderItem>>.from(state.currentOrders);
+    // Deep copy the map and lists
+    final currentOrders = <String, List<OrderItem>>{};
+    state.currentOrders.forEach((key, value) {
+      currentOrders[key] = List<OrderItem>.from(value);
+    });
     currentOrders.remove(tableId);
     emit(state.copyWith(currentOrders: currentOrders));
   }

@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../cubits/auth/auth_cubit.dart';
@@ -82,10 +84,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Icon(
-                        Icons.sports_baseball,
-                        size: 80,
-                        color: AppColors.primary,
+                      Image.asset(
+                        'assets/images/istockphoto-483985318-170667a-removebg-preview.png',
+                        width: 160,
+                        height: 160,
                       ),
                       const SizedBox(height: AppSizes.paddingMedium),
                       Text(

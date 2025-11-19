@@ -35,79 +35,9 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 4,
+      version: 1,
       onCreate: _createDB,
-      onUpgrade: _upgradeDB,
     );
-  }
-
-  Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 2) {
-      // Add zone column to billiard_tables
-      await db.execute('ALTER TABLE billiard_tables ADD COLUMN zone TEXT NOT NULL DEFAULT "Zone 1"');
-    }
-    if (oldVersion < 3) {
-      // Create zones table
-      await db.execute('''
-        CREATE TABLE zones (
-          id TEXT PRIMARY KEY,
-          name TEXT NOT NULL UNIQUE,
-          description TEXT,
-          sort_order INTEGER NOT NULL DEFAULT 0,
-          is_active INTEGER NOT NULL DEFAULT 1,
-          created_at TEXT NOT NULL
-        )
-      ''');
-      
-      // Insert default zones
-      final defaultZones = [
-        {'name': 'Zone 1', 'order': 1},
-        {'name': 'Zone 2', 'order': 2},
-        {'name': 'Zone 3', 'order': 3},
-        {'name': 'Zone 4', 'order': 4},
-        {'name': 'VIP 1', 'order': 5},
-        {'name': 'VIP 2', 'order': 6},
-        {'name': 'VVIP', 'order': 7},
-      ];
-      
-      int index = 1;
-      for (var zone in defaultZones) {
-        await db.insert('zones', {
-          'id': 'zone-$index',
-          'name': zone['name'],
-          'description': null,
-          'sort_order': zone['order'],
-          'is_active': 1,
-          'created_at': DateTime.now().toIso8601String(),
-        });
-        index++;
-      }
-    }
-    if (oldVersion < 4) {
-      // Create promotions table
-      await db.execute('''
-        CREATE TABLE promotions (
-          id TEXT PRIMARY KEY,
-          name TEXT NOT NULL,
-          description TEXT NOT NULL,
-          type TEXT NOT NULL,
-          value REAL NOT NULL,
-          applicable_table_types TEXT,
-          applicable_zones TEXT,
-          applicable_membership_type TEXT,
-          day_of_week TEXT,
-          start_time TEXT,
-          end_time TEXT,
-          valid_from TEXT,
-          valid_to TEXT,
-          min_amount REAL,
-          min_playing_hours REAL,
-          is_active INTEGER NOT NULL DEFAULT 1,
-          priority INTEGER NOT NULL DEFAULT 0,
-          created_at TEXT NOT NULL
-        )
-      ''');
-    }
   }
 
   Future<void> _createDB(Database db, int version) async {

@@ -1,4 +1,7 @@
+// ignore_for_file: deprecated_member_use, use_build_context_synchronously
+
 import 'package:flutter/material.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 import 'package:uuid/uuid.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -21,6 +24,7 @@ import '../models/invoice.dart';
 import '../models/promotion.dart';
 import '../utils/constants.dart';
 import '../utils/formatters.dart';
+import '../widgets/desktop_dialog.dart';
 
 class CashierScreen extends StatefulWidget {
   const CashierScreen({super.key});
@@ -198,7 +202,7 @@ class _CashierScreenState extends State<CashierScreen> {
                           builder: (context, state) {
                             final activeMembers = state is MemberLoaded ? state.activeMembers : [];
                             return DropdownButtonFormField<Member>(
-                              value: _selectedMember,
+                              initialValue: _selectedMember,
                               decoration: const InputDecoration(
                                 border: OutlineInputBorder(),
                                 hintText: 'Chọn thành viên...',
@@ -502,7 +506,8 @@ class _CashierScreenState extends State<CashierScreen> {
                     }),
                     const Divider(),
                   ],
-                  // Available promotions
+                  const SizedBox(height: AppSizes.paddingSmall),
+                  // Promotions section - always visible
                   _buildPromotionsSection(
                     subtotal,
                     playingHours,
@@ -595,27 +600,22 @@ class _CashierScreenState extends State<CashierScreen> {
   Widget _buildPromotionsSection(double subtotal, double playingHours) {
     return BlocBuilder<PromotionCubit, PromotionState>(
       builder: (context, promotionState) {
-        if (promotionState is! PromotionLoaded ||
-            promotionState.promotions.isEmpty) {
-          return const SizedBox.shrink();
-        }
-
-        // Find applicable promotions
-        final applicablePromotions =
-            context.read<PromotionCubit>().findApplicablePromotions(
-                  amount: subtotal,
-                  playingHours: playingHours,
-                  tableType: _selectedTable?.tableType,
-                  zone: _selectedTable?.zone,
-                  membershipType: _selectedMember?.membershipType,
-                );
-
-        if (applicablePromotions.isEmpty) {
-          return const SizedBox.shrink();
+        List<Promotion> applicablePromotions = [];
+        
+        if (promotionState is PromotionLoaded && promotionState.promotions.isNotEmpty) {
+          // Find applicable promotions
+          applicablePromotions =
+              context.read<PromotionCubit>().findApplicablePromotions(
+                    amount: subtotal,
+                    playingHours: playingHours,
+                    tableType: _selectedTable?.tableType,
+                    zone: _selectedTable?.zone,
+                    membershipType: _selectedMember?.membershipType,
+                  );
         }
 
         return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Divider(),
             Padding(
@@ -628,89 +628,135 @@ class _CashierScreenState extends State<CashierScreen> {
                     color: AppColors.warning,
                   ),
                   const SizedBox(width: 8),
-                  Text(
-                    'Ưu đãi có thể áp dụng',
-                    style: AppTextStyles.roboto(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
+                  Expanded(
+                    child: Text(
+                      'Ưu đãi',
+                      style: AppTextStyles.roboto(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                   ),
+                  if (_selectedPromotion != null)
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          _selectedPromotion = null;
+                        });
+                      },
+                      child: Text(
+                        'Bỏ chọn',
+                        style: AppTextStyles.roboto(
+                          fontSize: 12,
+                          color: AppColors.danger,
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
-            ...applicablePromotions.map((promo) {
-              final isSelected = _selectedPromotion?.id == promo.id;
-              final discount = promo.calculateDiscount(subtotal);
-
-              return InkWell(
-                onTap: () {
-                  setState(() {
-                    _selectedPromotion = isSelected ? null : promo;
-                  });
-                },
-                child: Container(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? AppColors.warning.withOpacity(0.1)
-                        : AppColors.background,
-                    border: Border.all(
-                      color: isSelected ? AppColors.warning : AppColors.border,
-                      width: isSelected ? 2 : 1,
-                    ),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        isSelected
-                            ? Icons.check_circle
-                            : Icons.radio_button_unchecked,
-                        color: isSelected ? AppColors.warning : AppColors.border,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              promo.name,
-                              style: AppTextStyles.roboto(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              promo.description,
-                              style: AppTextStyles.roboto(
-                                fontSize: 12,
-                                color: AppColors.textSecondary,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '-${AppFormatters.formatCurrency(discount)}',
-                        style: AppTextStyles.roboto(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.warning,
-                        ),
-                      ),
-                    ],
-                  ),
+            if (applicablePromotions.isEmpty)
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.background,
+                  border: Border.all(color: AppColors.border),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-              );
-            }),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      size: 16,
+                      color: AppColors.textSecondary,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Không có ưu đãi nào áp dụng cho đơn hàng này',
+                        style: AppTextStyles.roboto(
+                          fontSize: 13,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else
+              ...applicablePromotions.map((promo) {
+                final isSelected = _selectedPromotion?.id == promo.id;
+                final discount = promo.calculateDiscount(subtotal);
+
+                return InkWell(
+                  onTap: () {
+                    setState(() {
+                      _selectedPromotion = isSelected ? null : promo;
+                    });
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? AppColors.warning.withOpacity(0.1)
+                          : AppColors.background,
+                      border: Border.all(
+                        color: isSelected ? AppColors.warning : AppColors.border,
+                        width: isSelected ? 2 : 1,
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          isSelected
+                              ? Icons.check_circle
+                              : Icons.radio_button_unchecked,
+                          color: isSelected ? AppColors.warning : AppColors.border,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                promo.name,
+                                style: AppTextStyles.roboto(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                promo.description,
+                                style: AppTextStyles.roboto(
+                                  fontSize: 12,
+                                  color: AppColors.textSecondary,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '-${AppFormatters.formatCurrency(discount)}',
+                          style: AppTextStyles.roboto(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.warning,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }),
           ],
         );
       },
@@ -733,47 +779,170 @@ class _CashierScreenState extends State<CashierScreen> {
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: const Text('Xác nhận thanh toán'),
+        builder: (context, setState) => DesktopDialog(
+          title: 'Xác nhận thanh toán',
+          maxWidth: paymentMethod == 'online' ? 650 : 500,
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                AppFormatters.formatCurrency(total),
-                style: AppTextStyles.roboto(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.success,
+              // Total amount
+              Container(
+                padding: const EdgeInsets.all(AppSizes.paddingLarge),
+                decoration: BoxDecoration(
+                  color: AppColors.success.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+                  border: Border.all(
+                    color: AppColors.success.withOpacity(0.3),
+                    width: 2,
+                  ),
                 ),
-                textAlign: TextAlign.center,
+                child: Column(
+                  children: [
+                    Text(
+                      'Tổng thanh toán',
+                      style: AppTextStyles.roboto(
+                        fontSize: 14,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      AppFormatters.formatCurrency(total),
+                      style: AppTextStyles.roboto(
+                        fontSize: 36,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.success,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: AppSizes.paddingLarge),
-              const Text('Phương thức thanh toán:'),
+              // Payment method selection
+              Text(
+                'Phương thức thanh toán:',
+                style: AppTextStyles.roboto(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               const SizedBox(height: AppSizes.paddingSmall),
               DropdownButtonFormField<String>(
                 value: paymentMethod,
                 decoration: const InputDecoration(
                   border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.payment),
                 ),
                 items: [
                   DropdownMenuItem(
                     value: 'cash',
-                    child: Text(PaymentMethods.getMethodName('cash')),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.money, size: 20),
+                        const SizedBox(width: 8),
+                        Text(PaymentMethods.getMethodName('cash')),
+                      ],
+                    ),
                   ),
                   DropdownMenuItem(
                     value: 'card',
-                    child: Text(PaymentMethods.getMethodName('card')),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.credit_card, size: 20),
+                        const SizedBox(width: 8),
+                        Text(PaymentMethods.getMethodName('card')),
+                      ],
+                    ),
                   ),
                   DropdownMenuItem(
                     value: 'online',
-                    child: Text(PaymentMethods.getMethodName('online')),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.qr_code, size: 20),
+                        const SizedBox(width: 8),
+                        Text(PaymentMethods.getMethodName('online')),
+                      ],
+                    ),
                   ),
                 ],
                 onChanged: (value) {
                   setState(() => paymentMethod = value!);
                 },
               ),
+              // QR Code for online payment
+              if (paymentMethod == 'online') ...[
+                const SizedBox(height: AppSizes.paddingLarge),
+                Container(
+                  padding: const EdgeInsets.all(AppSizes.paddingMedium),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        'Quét mã QR để chuyển khoản',
+                        style: AppTextStyles.roboto(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: AppSizes.paddingMedium),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 10,
+                              spreadRadius: 2,
+                            ),
+                          ],
+                        ),
+                        child: QrImageView(
+                          data: _generateQRData(table.tableName, total),
+                          version: QrVersions.auto,
+                          size: 200,
+                          backgroundColor: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: AppSizes.paddingMedium),
+                      Container(
+                        padding: const EdgeInsets.all(AppSizes.paddingSmall),
+                        decoration: BoxDecoration(
+                          color: AppColors.info.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Column(
+                          children: [
+                            Text(
+                              'Thông tin chuyển khoản',
+                              style: AppTextStyles.roboto(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Nội dung: ${table.tableName}',
+                              style: AppTextStyles.roboto(
+                                fontSize: 12,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ],
           ),
           actions: [
@@ -797,13 +966,23 @@ class _CashierScreenState extends State<CashierScreen> {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.success,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSizes.paddingLarge,
+                  vertical: AppSizes.paddingMedium,
+                ),
               ),
-              child: const Text('XÁC NHẬN'),
+              child: const Text('XÁC NHẬN THANH TOÁN'),
             ),
           ],
         ),
       ),
     );
+  }
+
+  String _generateQRData(String tableName, double amount) {
+    // Format QR data for Vietnamese banking apps (VietQR format)
+    // This is a simplified version - in production you'd use actual bank account info
+    return 'Thanh toan $tableName - ${AppFormatters.formatCurrency(amount)}';
   }
 
   Future<void> _processPayment(

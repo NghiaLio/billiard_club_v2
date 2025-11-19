@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -205,6 +207,7 @@ class _RevenueTabState extends State<_RevenueTab> {
                     child: _StatCard(
                       title: 'Doanh thu tháng này',
                       value: AppFormatters.formatCurrency(monthRevenue),
+                      // ignore: prefer_interpolation_to_compose_strings
                       subtitle: DateTime.now().month.toString() + '/' +
                           DateTime.now().year.toString(),
                       icon: Icons.calendar_month,

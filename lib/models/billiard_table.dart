@@ -95,7 +95,7 @@ class BilliardTable {
   double get playingDuration {
     if (startTime == null) return 0;
     final duration = DateTime.now().difference(startTime!);
-    return duration.inMinutes / 60.0;
+    return duration.inSeconds / 3600.0;  // Dùng giây thay vì phút để có độ chính xác cao hơn
   }
 
   // Calculate current cost

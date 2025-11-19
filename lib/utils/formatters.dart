@@ -24,6 +24,14 @@ class AppFormatters {
   }
 
   static String formatDuration(double hours) {
+    final totalSeconds = (hours * 3600).floor();
+    final h = totalSeconds ~/ 3600;
+    final m = (totalSeconds % 3600) ~/ 60;
+    final s = totalSeconds % 60;
+    return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+  }
+  
+  static String formatDurationShort(double hours) {
     final h = hours.floor();
     final m = ((hours - h) * 60).round();
     return '${h}h ${m}m';

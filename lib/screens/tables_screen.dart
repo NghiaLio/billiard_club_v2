@@ -1,3 +1,6 @@
+// ignore_for_file: deprecated_member_use
+
+import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'package:uuid/uuid.dart';
@@ -199,7 +202,7 @@ class _TablesScreenState extends State<TablesScreen> {
                     gridDelegate:
                         const SliverGridDelegateWithMaxCrossAxisExtent(
                           maxCrossAxisExtent: 280,
-                          childAspectRatio: 0.9,
+                          childAspectRatio: 1.5,
                           crossAxisSpacing: AppSizes.paddingMedium,
                           mainAxisSpacing: AppSizes.paddingMedium,
                         ),
@@ -234,14 +237,92 @@ class _TablesScreenState extends State<TablesScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => Container(
+      builder: (context) => _TableActionsSheet(
+        table: table,
+        tableProvider: tableProvider,
+      ),
+    );
+  }
+}
+
+class _TableActionsSheet extends StatefulWidget {
+  final BilliardTable table;
+  final TableCubit tableProvider;
+
+  const _TableActionsSheet({
+    required this.table,
+    required this.tableProvider,
+  });
+
+  @override
+  State<_TableActionsSheet> createState() => _TableActionsSheetState();
+}
+
+class _TableActionsSheetState extends State<_TableActionsSheet> {
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.table.status == 'occupied') {
+      _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        if (mounted) setState(() {});
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _showEndSessionDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Xác nhận kết thúc'),
+        content: Text(
+          'Bạn có chắc muốn kết thúc phiên chơi của ${widget.table.tableName}?\n\n'
+          'Thời gian chơi sẽ không được ghi nhận.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Hủy'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              await context.read<TableCubit>().closeTable(widget.table.id);
+
+              if (context.mounted) {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Đã kết thúc phiên chơi'),
+                    backgroundColor: AppColors.success,
+                  ),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
+            child: const Text('Kết thúc'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
         padding: const EdgeInsets.all(AppSizes.paddingLarge),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              table.tableName,
+              widget.table.tableName,
               style: AppTextStyles.roboto(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -250,7 +331,7 @@ class _TablesScreenState extends State<TablesScreen> {
             ),
             const SizedBox(height: AppSizes.paddingSmall),
             Text(
-              '${AppFormatters.formatCurrency(table.pricePerHour)}/giờ',
+              '${AppFormatters.formatCurrency(widget.table.pricePerHour)}/giờ',
               style: AppTextStyles.roboto(
                 fontSize: 16,
                 color: AppColors.textSecondary,
@@ -258,10 +339,10 @@ class _TablesScreenState extends State<TablesScreen> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppSizes.paddingLarge),
-            if (table.status == 'available') ...[
+            if (widget.table.status == 'available') ...[
               ElevatedButton.icon(
                 onPressed: () async {
-                  await tableProvider.openTable(table.id);
+                  await widget.tableProvider.openTable(widget.table.id);
                   if (context.mounted) Navigator.pop(context);
                 },
                 icon: const Icon(Icons.play_arrow),
@@ -276,7 +357,8 @@ class _TablesScreenState extends State<TablesScreen> {
               ElevatedButton.icon(
                 onPressed: () {
                   Navigator.pop(context);
-                  _showReserveTableDialog(context, table);
+                  context.findAncestorStateOfType<_TablesScreenState>()!
+                      ._showReserveTableDialog(context, widget.table);
                 },
                 icon: const Icon(Icons.bookmark),
                 label: const Text('Đặt bàn'),
@@ -286,7 +368,7 @@ class _TablesScreenState extends State<TablesScreen> {
                   padding: const EdgeInsets.all(AppSizes.paddingMedium),
                 ),
               ),
-            ] else if (table.status == 'occupied') ...[
+            ] else if (widget.table.status == 'occupied') ...[
               Container(
                 padding: const EdgeInsets.all(AppSizes.paddingMedium),
                 decoration: BoxDecoration(
@@ -304,7 +386,7 @@ class _TablesScreenState extends State<TablesScreen> {
                     ),
                     const SizedBox(height: AppSizes.paddingSmall),
                     Text(
-                      AppFormatters.formatDuration(table.playingDuration),
+                      AppFormatters.formatDuration(widget.table.playingDuration),
                       style: AppTextStyles.roboto(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
@@ -313,7 +395,7 @@ class _TablesScreenState extends State<TablesScreen> {
                     ),
                     const SizedBox(height: AppSizes.paddingSmall),
                     Text(
-                      'Chi phí hiện tại: ${AppFormatters.formatCurrency(table.currentCost)}',
+                      'Chi phí hiện tại: ${AppFormatters.formatCurrency(widget.table.currentCost)}',
                       style: AppTextStyles.roboto(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -325,19 +407,19 @@ class _TablesScreenState extends State<TablesScreen> {
               ),
               const SizedBox(height: AppSizes.paddingMedium),
               ElevatedButton.icon(
-                onPressed: () async {
+                onPressed: () {
                   Navigator.pop(context);
-                  // Navigate to cashier screen for checkout
+                  _showEndSessionDialog();
                 },
-                icon: const Icon(Icons.payment),
-                label: const Text('Thanh toán'),
+                icon: const Icon(Icons.stop_circle),
+                label: const Text('Kết thúc'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.success,
+                  backgroundColor: AppColors.danger,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.all(AppSizes.paddingMedium),
                 ),
               ),
-            ] else if (table.status == 'reserved') ...[
+            ] else if (widget.table.status == 'reserved') ...[
               Container(
                 padding: const EdgeInsets.all(AppSizes.paddingMedium),
                 decoration: BoxDecoration(
@@ -347,16 +429,16 @@ class _TablesScreenState extends State<TablesScreen> {
                 child: Column(
                   children: [
                     Text(
-                      'Đặt bởi: ${table.reservedBy ?? "N/A"}',
+                      'Đặt bởi: ${widget.table.reservedBy ?? "N/A"}',
                       style: AppTextStyles.roboto(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    if (table.reservationTime != null) ...[
+                    if (widget.table.reservationTime != null) ...[
                       const SizedBox(height: AppSizes.paddingSmall),
                       Text(
-                        'Lúc: ${AppFormatters.formatDateTime(table.reservationTime!)}',
+                        'Lúc: ${AppFormatters.formatDateTime(widget.table.reservationTime!)}',
                         style: AppTextStyles.roboto(
                           fontSize: 14,
                           color: AppColors.textSecondary,
@@ -369,7 +451,7 @@ class _TablesScreenState extends State<TablesScreen> {
               const SizedBox(height: AppSizes.paddingMedium),
               ElevatedButton.icon(
                 onPressed: () async {
-                  await tableProvider.openTable(table.id);
+                  await widget.tableProvider.openTable(widget.table.id);
                   if (context.mounted) Navigator.pop(context);
                 },
                 icon: const Icon(Icons.play_arrow),
@@ -383,7 +465,7 @@ class _TablesScreenState extends State<TablesScreen> {
               const SizedBox(height: AppSizes.paddingSmall),
               ElevatedButton.icon(
                 onPressed: () async {
-                  await tableProvider.cancelReservation(table.id);
+                  await widget.tableProvider.cancelReservation(widget.table.id);
                   if (context.mounted) Navigator.pop(context);
                 },
                 icon: const Icon(Icons.cancel),
@@ -402,10 +484,11 @@ class _TablesScreenState extends State<TablesScreen> {
             ),
           ],
         ),
-      ),
-    );
+      );
   }
+}
 
+extension _TablesScreenStateMethods on _TablesScreenState {
   void _showAddTableDialog(BuildContext context) {
     final nameController = TextEditingController();
     final priceController = TextEditingController();
@@ -690,7 +773,7 @@ class _TablesScreenState extends State<TablesScreen> {
   }
 }
 
-class _TableCard extends StatelessWidget {
+class _TableCard extends StatefulWidget {
   final BilliardTable table;
   final VoidCallback onTap;
   final VoidCallback? onEdit;
@@ -704,11 +787,47 @@ class _TableCard extends StatelessWidget {
   });
 
   @override
+  State<_TableCard> createState() => _TableCardState();
+}
+
+class _TableCardState extends State<_TableCard> {
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _startTimer();
+  }
+
+  @override
+  void didUpdateWidget(_TableCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.table.status != widget.table.status) {
+      _startTimer();
+    }
+  }
+
+  void _startTimer() {
+    _timer?.cancel();
+    if (widget.table.status == 'occupied') {
+      _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        if (mounted) setState(() {});
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final statusColor = TableStatus.getStatusColor(table.status);
+    final statusColor = TableStatus.getStatusColor(widget.table.status);
 
     return InkWell(
-      onTap: onTap,
+      onTap: widget.onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
         decoration: BoxDecoration(
@@ -736,7 +855,7 @@ class _TableCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      table.tableName,
+                      widget.table.tableName,
                       style: AppTextStyles.roboto(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -754,7 +873,7 @@ class _TableCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
-                      TableStatus.getStatusText(table.status),
+                      TableStatus.getStatusText(widget.table.status),
                       style: AppTextStyles.roboto(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
@@ -762,12 +881,12 @@ class _TableCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  if (onEdit != null || onDelete != null)
+                  if (widget.onEdit != null || widget.onDelete != null)
                     PopupMenuButton<String>(
                       icon: const Icon(Icons.more_vert, size: 18),
                       padding: EdgeInsets.zero,
                       itemBuilder: (context) => [
-                        if (onEdit != null)
+                        if (widget.onEdit != null)
                           const PopupMenuItem(
                             value: 'edit',
                             child: Row(
@@ -778,7 +897,7 @@ class _TableCard extends StatelessWidget {
                               ],
                             ),
                           ),
-                        if (onDelete != null)
+                        if (widget.onDelete != null)
                           const PopupMenuItem(
                             value: 'delete',
                             child: Row(
@@ -798,10 +917,10 @@ class _TableCard extends StatelessWidget {
                           ),
                       ],
                       onSelected: (value) {
-                        if (value == 'edit' && onEdit != null) {
-                          onEdit!();
-                        } else if (value == 'delete' && onDelete != null) {
-                          onDelete!();
+                        if (value == 'edit' && widget.onEdit != null) {
+                          widget.onEdit!();
+                        } else if (value == 'delete' && widget.onDelete != null) {
+                          widget.onDelete!();
                         }
                       },
                     ),
@@ -819,7 +938,7 @@ class _TableCard extends StatelessWidget {
                   children: [
                     // Hình ảnh bàn bida
                     ColorFiltered(
-                      colorFilter: table.status == 'available'
+                      colorFilter: widget.table.status == 'available'
                           ? const ColorFilter.mode(
                               Colors.transparent,
                               BlendMode.multiply,
@@ -834,29 +953,20 @@ class _TableCard extends StatelessWidget {
                       ),
                     ),
                     // Overlay tối cho bàn đang dùng
-                    if (table.status != 'available')
+                    if (widget.table.status != 'available')
                       Container(
                         color: Colors.black.withOpacity(0.3),
                       ),
                     // Thông tin ở giữa bàn
                     Center(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.6),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            if (table.status == 'occupied' &&
-                                table.startTime != null) ...[
+                            if (widget.table.status == 'occupied' &&
+                                widget.table.startTime != null) ...[
                               Text(
                                 AppFormatters.formatDuration(
-                                  table.playingDuration,
+                                  widget.table.playingDuration,
                                 ),
                                 style: AppTextStyles.roboto(
                                   fontSize: 20,
@@ -866,7 +976,7 @@ class _TableCard extends StatelessWidget {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                AppFormatters.formatCurrency(table.currentCost),
+                                AppFormatters.formatCurrency(widget.table.currentCost),
                                 style: AppTextStyles.roboto(
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
@@ -875,34 +985,27 @@ class _TableCard extends StatelessWidget {
                               ),
                             ] else ...[
                               Text(
-                                table.tableType.toUpperCase(),
+                                widget.table.tableType.toUpperCase(),
                                 style: AppTextStyles.roboto(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white70,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                AppFormatters.formatCurrency(table.pricePerHour),
-                                style: AppTextStyles.roboto(
-                                  fontSize: 14,
+                                  fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white,
                                 ),
                               ),
+                              const SizedBox(height: 4),
                               Text(
-                                '/giờ',
+                                '${AppFormatters.formatCurrency(widget.table.pricePerHour)} /giờ',
                                 style: AppTextStyles.roboto(
-                                  fontSize: 11,
-                                  color: Colors.white70,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.white,
                                 ),
                               ),
+                              
                             ],
                           ],
                         ),
                       ),
-                    ),
                   ],
                 ),
               ),

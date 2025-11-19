@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 
 import 'package:uuid/uuid.dart';
@@ -7,6 +9,7 @@ import '../cubits/product/product_state.dart';
 import '../models/product.dart';
 import '../utils/constants.dart';
 import '../utils/formatters.dart';
+import '../widgets/desktop_dialog.dart';
 
 class ProductsScreen extends StatefulWidget {
   const ProductsScreen({super.key});
@@ -175,11 +178,13 @@ class _ProductsScreenState extends State<ProductsScreen> {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Thêm hàng hóa mới'),
-        content: SingleChildScrollView(
-          child: Column(
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => DesktopDialog(
+          title: 'Thêm hàng hóa mới',
+          maxWidth: 600,
+          content: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               TextField(
                 controller: nameController,
@@ -201,25 +206,33 @@ class _ProductsScreenState extends State<ProductsScreen> {
                   DropdownMenuItem(value: 'equipment', child: Text('Thiết bị')),
                   DropdownMenuItem(value: 'other', child: Text('Khác')),
                 ],
-                onChanged: (value) => category = value!,
+                onChanged: (value) => setState(() => category = value!),
               ),
               const SizedBox(height: AppSizes.paddingMedium),
-              TextField(
-                controller: priceController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Giá (VNĐ) *',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: AppSizes.paddingMedium),
-              TextField(
-                controller: stockController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Số lượng tồn kho *',
-                  border: OutlineInputBorder(),
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: priceController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Giá (VNĐ) *',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppSizes.paddingMedium),
+                  Expanded(
+                    child: TextField(
+                      controller: stockController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Số lượng tồn kho *',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: AppSizes.paddingMedium),
               TextField(
@@ -232,58 +245,59 @@ class _ProductsScreenState extends State<ProductsScreen> {
               const SizedBox(height: AppSizes.paddingMedium),
               TextField(
                 controller: descriptionController,
-                maxLines: 2,
+                maxLines: 3,
                 decoration: const InputDecoration(
                   labelText: 'Mô tả',
                   border: OutlineInputBorder(),
+                  alignLabelWithHint: true,
                 ),
               ),
             ],
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Hủy'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (nameController.text.isNotEmpty &&
-                  priceController.text.isNotEmpty &&
-                  stockController.text.isNotEmpty) {
-                final product = Product(
-                  id: const Uuid().v4(),
-                  name: nameController.text,
-                  category: category,
-                  price: double.parse(priceController.text),
-                  stockQuantity: int.parse(stockController.text),
-                  unit: unitController.text.isEmpty ? null : unitController.text,
-                  description: descriptionController.text.isEmpty
-                      ? null
-                      : descriptionController.text,
-                  createdAt: DateTime.now(),
-                );
-
-                await context.read<ProductCubit>()
-                    .addProduct(product);
-
-                if (context.mounted) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Thêm hàng hóa thành công'),
-                      backgroundColor: AppColors.success,
-                    ),
-                  );
-                }
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Hủy'),
             ),
-            child: const Text('Thêm'),
-          ),
-        ],
+            ElevatedButton(
+              onPressed: () async {
+                if (nameController.text.isNotEmpty &&
+                    priceController.text.isNotEmpty &&
+                    stockController.text.isNotEmpty) {
+                  final product = Product(
+                    id: const Uuid().v4(),
+                    name: nameController.text,
+                    category: category,
+                    price: double.parse(priceController.text),
+                    stockQuantity: int.parse(stockController.text),
+                    unit: unitController.text.isEmpty ? null : unitController.text,
+                    description: descriptionController.text.isEmpty
+                        ? null
+                        : descriptionController.text,
+                    createdAt: DateTime.now(),
+                  );
+
+                  await context.read<ProductCubit>()
+                      .addProduct(product);
+
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Thêm hàng hóa thành công'),
+                        backgroundColor: AppColors.success,
+                      ),
+                    );
+                  }
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+              ),
+              child: const Text('Thêm'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -303,81 +317,90 @@ class _ProductsScreenState extends State<ProductsScreen> {
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: const Text('Chỉnh sửa hàng hóa'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Tên hàng hóa',
-                    border: OutlineInputBorder(),
+        builder: (context, setState) => DesktopDialog(
+          title: 'Chỉnh sửa hàng hóa',
+          maxWidth: 600,
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Tên hàng hóa',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: AppSizes.paddingMedium),
+              DropdownButtonFormField<String>(
+                value: category,
+                decoration: const InputDecoration(
+                  labelText: 'Danh mục',
+                  border: OutlineInputBorder(),
+                ),
+                items: const [
+                  DropdownMenuItem(value: 'food', child: Text('Đồ ăn')),
+                  DropdownMenuItem(value: 'drink', child: Text('Đồ uống')),
+                  DropdownMenuItem(value: 'equipment', child: Text('Thiết bị')),
+                  DropdownMenuItem(value: 'other', child: Text('Khác')),
+                ],
+                onChanged: (value) {
+                  setState(() => category = value!);
+                },
+              ),
+              const SizedBox(height: AppSizes.paddingMedium),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: priceController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Giá (VNĐ)',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
                   ),
-                ),
-                const SizedBox(height: AppSizes.paddingMedium),
-                DropdownButtonFormField<String>(
-                  value: category,
-                  decoration: const InputDecoration(
-                    labelText: 'Danh mục',
-                    border: OutlineInputBorder(),
+                  const SizedBox(width: AppSizes.paddingMedium),
+                  Expanded(
+                    child: TextField(
+                      controller: stockController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Số lượng tồn kho',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
                   ),
-                  items: const [
-                    DropdownMenuItem(value: 'food', child: Text('Đồ ăn')),
-                    DropdownMenuItem(value: 'drink', child: Text('Đồ uống')),
-                    DropdownMenuItem(value: 'equipment', child: Text('Thiết bị')),
-                    DropdownMenuItem(value: 'other', child: Text('Khác')),
-                  ],
-                  onChanged: (value) {
-                    setState(() => category = value!);
-                  },
+                ],
+              ),
+              const SizedBox(height: AppSizes.paddingMedium),
+              TextField(
+                controller: unitController,
+                decoration: const InputDecoration(
+                  labelText: 'Đơn vị',
+                  border: OutlineInputBorder(),
                 ),
-                const SizedBox(height: AppSizes.paddingMedium),
-                TextField(
-                  controller: priceController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Giá (VNĐ)',
-                    border: OutlineInputBorder(),
-                  ),
+              ),
+              const SizedBox(height: AppSizes.paddingMedium),
+              TextField(
+                controller: descriptionController,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'Mô tả',
+                  border: OutlineInputBorder(),
+                  alignLabelWithHint: true,
                 ),
-                const SizedBox(height: AppSizes.paddingMedium),
-                TextField(
-                  controller: stockController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Số lượng tồn kho',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: AppSizes.paddingMedium),
-                TextField(
-                  controller: unitController,
-                  decoration: const InputDecoration(
-                    labelText: 'Đơn vị',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: AppSizes.paddingMedium),
-                TextField(
-                  controller: descriptionController,
-                  maxLines: 2,
-                  decoration: const InputDecoration(
-                    labelText: 'Mô tả',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: AppSizes.paddingMedium),
-                SwitchListTile(
-                  title: const Text('Có sẵn'),
-                  value: isAvailable,
-                  onChanged: (value) {
-                    setState(() => isAvailable = value);
-                  },
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(height: AppSizes.paddingMedium),
+              SwitchListTile(
+                title: const Text('Có sẵn'),
+                value: isAvailable,
+                onChanged: (value) {
+                  setState(() => isAvailable = value);
+                },
+              ),
+            ],
           ),
           actions: [
             TextButton(
@@ -429,13 +452,15 @@ class _ProductsScreenState extends State<ProductsScreen> {
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: Text('Cập nhật tồn kho - ${product.name}'),
+        builder: (context, setState) => DesktopDialog(
+          title: 'Cập nhật tồn kho - ${product.name}',
+          maxWidth: 500,
           content: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Container(
-                padding: const EdgeInsets.all(AppSizes.paddingMedium),
+                padding: const EdgeInsets.all(AppSizes.paddingLarge),
                 decoration: BoxDecoration(
                   color: AppColors.info.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(AppSizes.borderRadius),
@@ -453,7 +478,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                     Text(
                       '${product.stockQuantity} ${product.unit ?? ''}',
                       style: AppTextStyles.roboto(
-                        fontSize: 24,
+                        fontSize: 32,
                         fontWeight: FontWeight.bold,
                         color: AppColors.primary,
                       ),
@@ -472,6 +497,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                       onChanged: (value) {
                         setState(() => isAdding = value!);
                       },
+                      contentPadding: EdgeInsets.zero,
                     ),
                   ),
                   Expanded(
@@ -482,6 +508,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                       onChanged: (value) {
                         setState(() => isAdding = value!);
                       },
+                      contentPadding: EdgeInsets.zero,
                     ),
                   ),
                 ],
@@ -490,9 +517,11 @@ class _ProductsScreenState extends State<ProductsScreen> {
               TextField(
                 controller: quantityController,
                 keyboardType: TextInputType.number,
+                autofocus: true,
                 decoration: const InputDecoration(
-                  labelText: 'Số lượng',
+                  labelText: 'Số lượng *',
                   border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.numbers),
                 ),
               ),
             ],
@@ -536,9 +565,14 @@ class _ProductsScreenState extends State<ProductsScreen> {
   void _confirmDelete(BuildContext context, Product product) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Xác nhận xóa'),
-        content: Text('Bạn có chắc muốn xóa hàng hóa ${product.name}?'),
+      builder: (context) => DesktopDialog(
+        title: 'Xác nhận xóa',
+        maxWidth: 450,
+        content: Text(
+          'Bạn có chắc muốn xóa hàng hóa "${product.name}"?\n\n'
+          'Hành động này không thể hoàn tác.',
+          style: AppTextStyles.roboto(fontSize: 16),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
