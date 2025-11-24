@@ -1,6 +1,7 @@
 // ignore_for_file: deprecated_member_use
 
 import 'dart:async';
+import 'package:billiard_club/services/excel_service.dart';
 import 'package:flutter/material.dart';
 
 import 'package:uuid/uuid.dart';
@@ -29,10 +30,12 @@ class _TablesScreenState extends State<TablesScreen> {
   void initState() {
     super.initState();
     context.read<ZoneCubit>().loadActiveZones();
+    context.read<TableCubit>().loadTables();
   }
 
   @override
   Widget build(BuildContext context) {
+    final listTables = context.watch<TableCubit>().tables;
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -43,6 +46,20 @@ class _TablesScreenState extends State<TablesScreen> {
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
         actions: [
+          listTables.isEmpty ? Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSizes.paddingMedium,
+            ),
+            child: ElevatedButton.icon(
+              onPressed: () => _showImportTableDialog(context),
+              icon: const Icon(Icons.add),
+              label: const Text('Nhập dữ liệu bàn'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ): SizedBox.shrink(),
           Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: AppSizes.paddingMedium,
@@ -180,7 +197,7 @@ class _TablesScreenState extends State<TablesScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
-                            Icons.table_bar,
+                            Icons.table_restaurant,
                             size: 80,
                             color: AppColors.textSecondary.withOpacity(0.5),
                           ),
@@ -489,6 +506,48 @@ class _TableActionsSheetState extends State<_TableActionsSheet> {
 }
 
 extension _TablesScreenStateMethods on _TablesScreenState {
+
+
+  void _showImportTableDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => DesktopDialog(
+        title: 'Nhập dữ liệu bàn',
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Nhập dữ liệu bàn từ file Excel'),
+            ElevatedButton.icon(
+              onPressed: () async {
+                final file = await ExcelService().loadExcelFile();
+                if (file != null) {
+                  final excel = await ExcelService().readExcelFile(file);
+                  for (var sheet in excel.sheets.values) {
+                    for (var row in sheet.rows) {
+                      final table = BilliardTable(
+                        id: const Uuid().v4(),
+                        tableName: row[0] as String,
+                        tableType: row[1] as String,
+                        zone: row[2] as String,
+                        pricePerHour: double.parse(row[3] as String),
+                      );
+                      await context.read<TableCubit>().addTable(table);
+                    }
+                  }
+                }
+              },
+              icon: const Icon(Icons.file_upload),
+              label: const Text('Chọn file Excel'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
   void _showAddTableDialog(BuildContext context) {
     final nameController = TextEditingController();
     final priceController = TextEditingController();

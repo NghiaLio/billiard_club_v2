@@ -9,6 +9,8 @@ class TableCubit extends Cubit<TableState> {
 
   List<BilliardTable> _tables = [];
 
+  List<BilliardTable> get tables => _tables;
+
   Future<void> loadTables() async {
     await _syncTablesFromDatabase(showLoading: true);
   }

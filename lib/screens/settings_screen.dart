@@ -1,12 +1,20 @@
-// ignore_for_file: deprecated_member_use
+// ignore_for_file: deprecated_member_use, use_build_context_synchronously
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../cubits/invoice/invoice_cubit.dart';
 import '../cubits/invoice/invoice_state.dart';
+import '../cubits/table/table_cubit.dart';
+import '../cubits/member/member_cubit.dart';
+import '../cubits/product/product_cubit.dart';
+import '../cubits/user/user_cubit.dart';
+import '../cubits/promotion/promotion_cubit.dart';
+import '../cubits/zone/zone_cubit.dart';
+import '../services/database_service.dart';
 import '../utils/constants.dart';
 import '../utils/formatters.dart';
+import '../widgets/desktop_dialog.dart';
 import 'zones_management_screen.dart';
 import 'promotions_management_screen.dart';
 
@@ -465,8 +473,201 @@ class _InvoicesTab extends StatelessWidget {
   }
 }
 
-class _InfoTab extends StatelessWidget {
+class _InfoTab extends StatefulWidget {
   const _InfoTab();
+
+  @override
+  State<_InfoTab> createState() => _InfoTabState();
+}
+
+class _InfoTabState extends State<_InfoTab> {
+  bool _isResetting = false;
+
+  Future<void> _showResetDatabaseDialog() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => DesktopDialog(
+        title: 'Xác nhận reset database',
+        maxWidth: 500,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(AppSizes.paddingMedium),
+              decoration: BoxDecoration(
+                color: AppColors.danger.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+                border: Border.all(color: AppColors.danger, width: 2),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.warning, color: AppColors.danger, size: 40),
+                  const SizedBox(width: AppSizes.paddingMedium),
+                  Expanded(
+                    child: Text(
+                      'CẢNH BÁO',
+                      style: AppTextStyles.roboto(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.danger,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSizes.paddingLarge),
+            Text(
+              'Hành động này sẽ XÓA TOÀN BỘ dữ liệu trong database bao gồm:',
+              style: AppTextStyles.roboto(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: AppSizes.paddingMedium),
+            _DangerItem(text: 'Tất cả bàn billiard và trạng thái'),
+            _DangerItem(text: 'Tất cả thành viên'),
+            _DangerItem(text: 'Tất cả nhân viên (trừ tài khoản admin mặc định)'),
+            _DangerItem(text: 'Tất cả hàng hóa và tồn kho'),
+            _DangerItem(text: 'Tất cả đơn hàng và hóa đơn'),
+            _DangerItem(text: 'Tất cả khu vực và ưu đãi'),
+            const SizedBox(height: AppSizes.paddingLarge),
+            Container(
+              padding: const EdgeInsets.all(AppSizes.paddingMedium),
+              decoration: BoxDecoration(
+                color: AppColors.info.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.info, color: AppColors.info, size: 20),
+                  const SizedBox(width: AppSizes.paddingSmall),
+                  Expanded(
+                    child: Text(
+                      'Database sẽ được tạo lại với tài khoản admin mặc định:\nUsername: admin | Password: admin123',
+                      style: AppTextStyles.roboto(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSizes.paddingMedium),
+            Text(
+              'Bạn có chắc chắn muốn tiếp tục?',
+              style: AppTextStyles.roboto(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: AppColors.danger,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Hủy'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.danger,
+            ),
+            child: const Text('XÁC NHẬN RESET'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await _resetDatabase();
+    }
+  }
+
+  Future<void> _resetDatabase() async {
+    setState(() => _isResetting = true);
+
+    try {
+      // Show loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: Card(
+            child: Padding(
+              padding: EdgeInsets.all(AppSizes.paddingLarge),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: AppSizes.paddingMedium),
+                  Text('Đang reset database...'),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+
+      // Reset database
+      await DatabaseService.instance.resetDatabase();
+
+      // Reload all cubits
+      if (mounted) {
+        context.read<TableCubit>().loadTables();
+        context.read<MemberCubit>().loadMembers();
+        context.read<ProductCubit>().loadProducts();
+        context.read<InvoiceCubit>().loadInvoices();
+        context.read<UserCubit>().loadUsers();
+        context.read<PromotionCubit>().loadPromotions();
+        context.read<ZoneCubit>().loadZones();
+      }
+
+      // Close loading dialog
+      if (mounted) {
+        Navigator.pop(context);
+      }
+
+      // Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: AppSizes.paddingSmall),
+                Text('Reset database thành công!'),
+              ],
+            ),
+            backgroundColor: AppColors.success,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      // Close loading dialog
+      if (mounted) {
+        Navigator.pop(context);
+      }
+
+      // Show error message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Lỗi: $e'),
+            backgroundColor: AppColors.danger,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isResetting = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -557,6 +758,87 @@ class _InfoTab extends StatelessWidget {
                   _FeatureItem(icon: Icons.bar_chart, text: 'Báo cáo doanh thu'),
                   _FeatureItem(icon: Icons.receipt, text: 'Quản lý hóa đơn'),
                   _FeatureItem(icon: Icons.discount, text: 'Hệ thống thành viên & giảm giá'),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSizes.paddingLarge),
+          // Database Management Section
+          Card(
+            elevation: AppSizes.cardElevation,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(AppSizes.paddingLarge),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.danger.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.storage,
+                          color: AppColors.danger,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: AppSizes.paddingMedium),
+                      Text(
+                        'Quản lý Database',
+                        style: AppTextStyles.roboto(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSizes.paddingMedium),
+                  const Divider(),
+                  const SizedBox(height: AppSizes.paddingMedium),
+                  Text(
+                    'Chức năng này cho phép reset toàn bộ database. Tất cả dữ liệu sẽ bị xóa và database sẽ được tạo lại với các bảng trống. Chỉ giữ lại tài khoản admin mặc định (username: admin / password: admin123).',
+                    style: AppTextStyles.roboto(
+                      fontSize: 14,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: AppSizes.paddingLarge),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _isResetting ? null : _showResetDatabaseDialog,
+                      icon: _isResetting
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                            )
+                          : const Icon(Icons.refresh),
+                      label: Text(
+                        _isResetting ? 'Đang reset...' : 'Reset Database',
+                        style: AppTextStyles.roboto(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.danger,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSizes.paddingMedium,
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -742,6 +1024,34 @@ class _FeatureItem extends StatelessWidget {
             style: AppTextStyles.roboto(
               fontSize: 14,
               color: AppColors.textPrimary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DangerItem extends StatelessWidget {
+  final String text;
+
+  const _DangerItem({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          const Icon(Icons.close, size: 18, color: AppColors.danger),
+          const SizedBox(width: AppSizes.paddingSmall),
+          Expanded(
+            child: Text(
+              text,
+              style: AppTextStyles.roboto(
+                fontSize: 13,
+                color: AppColors.textPrimary,
+              ),
             ),
           ),
         ],

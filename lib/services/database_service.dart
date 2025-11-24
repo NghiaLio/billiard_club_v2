@@ -40,7 +40,26 @@ class DatabaseService {
     );
   }
 
+  // Create database schema and default admin user
   Future<void> _createDB(Database db, int version) async {
+    await _createSchema(db);
+    
+    // Insert default admin user for login
+    await db.insert('users', {
+      'id': 'admin-001',
+      'username': 'admin',
+      'password': 'admin123', // In production, use hashed passwords
+      'full_name': 'Administrator',
+      'role': 'manager',
+      'phone': '0123456789',
+      'email': 'admin@billiardclub.com',
+      'is_active': 1,
+      'created_at': DateTime.now().toIso8601String(),
+    });
+  }
+
+  // Create all tables schema
+  Future<void> _createSchema(Database db) async {
     // Users table
     await db.execute('''
       CREATE TABLE users (
@@ -192,87 +211,6 @@ class DatabaseService {
         created_at TEXT NOT NULL
       )
     ''');
-
-    // Insert default admin user
-    await db.insert('users', {
-      'id': 'admin-001',
-      'username': 'admin',
-      'password': 'admin123', // In production, use hashed passwords
-      'full_name': 'Administrator',
-      'role': 'manager',
-      'phone': '0123456789',
-      'email': 'admin@billiardclub.com',
-      'is_active': 1,
-      'created_at': DateTime.now().toIso8601String(),
-    });
-
-    // Insert sample billiard tables
-    final now = DateTime.now().toIso8601String();
-    final tableTypes = ['Rasson', 'MrSung', 'Aliex Crown', 'Predator Arc', 'Dinamon', 'Chinese Pool'];
-    final zones = ['Zone 1', 'Zone 2', 'Zone 3', 'Zone 4', 'VIP 1', 'VIP 2', 'VVIP'];
-    
-    for (int i = 1; i <= 10; i++) {
-      await db.insert('billiard_tables', {
-        'id': 'table-$i',
-        'table_name': 'Bàn $i',
-        'table_type': tableTypes[i % tableTypes.length],
-        'zone': zones[i % zones.length],
-        'price_per_hour': i <= 6 ? 50000.0 : (i <= 8 ? 80000.0 : 100000.0),
-        'status': 'available',
-      });
-    }
-
-    // Insert sample products
-    final products = [
-      {'name': 'Coca Cola', 'category': 'drink', 'price': 15000.0, 'unit': 'lon'},
-      {'name': 'Pepsi', 'category': 'drink', 'price': 15000.0, 'unit': 'lon'},
-      {'name': 'Sting', 'category': 'drink', 'price': 12000.0, 'unit': 'lon'},
-      {'name': 'Red Bull', 'category': 'drink', 'price': 20000.0, 'unit': 'lon'},
-      {'name': 'Nước suối', 'category': 'drink', 'price': 8000.0, 'unit': 'chai'},
-      {'name': 'Mì tôm', 'category': 'food', 'price': 25000.0, 'unit': 'tô'},
-      {'name': 'Snack', 'category': 'food', 'price': 10000.0, 'unit': 'gói'},
-      {'name': 'Thuốc lá', 'category': 'other', 'price': 30000.0, 'unit': 'bao'},
-    ];
-
-    int productIndex = 1;
-    for (var product in products) {
-      await db.insert('products', {
-        'id': 'product-$productIndex',
-        'name': product['name'],
-        'category': product['category'],
-        'price': product['price'],
-        'stock_quantity': 100,
-        'unit': product['unit'],
-        'description': '',
-        'is_available': 1,
-        'created_at': now,
-      });
-      productIndex++;
-    }
-
-    // Insert default zones
-    final defaultZones = [
-      {'name': 'Zone 1', 'order': 1},
-      {'name': 'Zone 2', 'order': 2},
-      {'name': 'Zone 3', 'order': 3},
-      {'name': 'Zone 4', 'order': 4},
-      {'name': 'VIP 1', 'order': 5},
-      {'name': 'VIP 2', 'order': 6},
-      {'name': 'VVIP', 'order': 7},
-    ];
-
-    int zoneIndex = 1;
-    for (var zone in defaultZones) {
-      await db.insert('zones', {
-        'id': 'zone-$zoneIndex',
-        'name': zone['name'],
-        'description': null,
-        'sort_order': zone['order'],
-        'is_active': 1,
-        'created_at': now,
-      });
-      zoneIndex++;
-    }
   }
 
   // User operations
@@ -586,6 +524,37 @@ class DatabaseService {
   Future<void> deletePromotion(String id) async {
     final db = await database;
     await db.delete('promotions', where: 'id = ?', whereArgs: [id]);
+  }
+
+  // Reset database - delete and recreate with empty tables
+  Future<void> resetDatabase() async {
+    try {
+      // Close current database connection
+      if (_database != null) {
+        await _database!.close();
+        _database = null;
+      }
+
+      // Get database path
+      final dbPath = await getApplicationDocumentsDirectory();
+      final path = join(dbPath.path, 'billiard_club.db');
+
+      // Delete database file
+      final file = File(path);
+      if (await file.exists()) {
+        await file.delete();
+      }
+
+      // Recreate database with empty tables (no default data)
+      _database = await openDatabase(
+        path,
+        version: 1,
+        onCreate: _createDB,
+      );
+    } catch (e) {
+      print('Error resetting database: $e');
+      rethrow;
+    }
   }
 
   Future<void> close() async {
