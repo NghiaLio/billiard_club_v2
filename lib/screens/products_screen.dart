@@ -42,7 +42,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
         elevation: 0,
         actions: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSizes.paddingMedium,
+            ),
             child: ElevatedButton.icon(
               onPressed: () => _showAddProductDialog(context),
               icon: const Icon(Icons.add),
@@ -92,7 +94,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
                       label: 'Thiết bị',
                       icon: Icons.sports_baseball,
                       isSelected: _filterCategory == 'equipment',
-                      onTap: () => setState(() => _filterCategory = 'equipment'),
+                      onTap: () =>
+                          setState(() => _filterCategory = 'equipment'),
                     ),
                     const SizedBox(width: AppSizes.paddingSmall),
                     _FilterChip(
@@ -114,7 +117,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                   }
 
                   if (state is! ProductLoaded) return const SizedBox();
-                    var products = state.products;
+                  var products = state.products;
 
                   if (_filterCategory != 'all') {
                     products = products
@@ -270,15 +273,16 @@ class _ProductsScreenState extends State<ProductsScreen> {
                     category: category,
                     price: double.parse(priceController.text),
                     stockQuantity: int.parse(stockController.text),
-                    unit: unitController.text.isEmpty ? null : unitController.text,
+                    unit: unitController.text.isEmpty
+                        ? null
+                        : unitController.text,
                     description: descriptionController.text.isEmpty
                         ? null
                         : descriptionController.text,
                     createdAt: DateTime.now(),
                   );
 
-                  await context.read<ProductCubit>()
-                      .addProduct(product);
+                  await context.read<ProductCubit>().addProduct(product);
 
                   if (context.mounted) {
                     Navigator.pop(context);
@@ -294,7 +298,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
               ),
-              child: const Text('Thêm'),
+              child: const Text('Thêm', style: TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -304,13 +308,16 @@ class _ProductsScreenState extends State<ProductsScreen> {
 
   void _showEditProductDialog(BuildContext context, Product product) {
     final nameController = TextEditingController(text: product.name);
-    final priceController =
-        TextEditingController(text: product.price.toString());
-    final stockController =
-        TextEditingController(text: product.stockQuantity.toString());
+    final priceController = TextEditingController(
+      text: product.price.toString(),
+    );
+    final stockController = TextEditingController(
+      text: product.stockQuantity.toString(),
+    );
     final unitController = TextEditingController(text: product.unit ?? '');
-    final descriptionController =
-        TextEditingController(text: product.description ?? '');
+    final descriptionController = TextEditingController(
+      text: product.description ?? '',
+    );
     String category = product.category;
     bool isAvailable = product.isAvailable;
 
@@ -414,15 +421,18 @@ class _ProductsScreenState extends State<ProductsScreen> {
                   category: category,
                   price: double.parse(priceController.text),
                   stockQuantity: int.parse(stockController.text),
-                  unit: unitController.text.isEmpty ? null : unitController.text,
+                  unit: unitController.text.isEmpty
+                      ? null
+                      : unitController.text,
                   description: descriptionController.text.isEmpty
                       ? null
                       : descriptionController.text,
                   isAvailable: isAvailable,
                 );
 
-                await context.read<ProductCubit>()
-                    .updateProduct(updatedProduct);
+                await context.read<ProductCubit>().updateProduct(
+                  updatedProduct,
+                );
 
                 if (context.mounted) {
                   Navigator.pop(context);
@@ -537,8 +547,10 @@ class _ProductsScreenState extends State<ProductsScreen> {
                   int quantity = int.parse(quantityController.text);
                   if (!isAdding) quantity = -quantity;
 
-                  await context.read<ProductCubit>()
-                      .updateStock(product.id, quantity);
+                  await context.read<ProductCubit>().updateStock(
+                    product.id,
+                    quantity,
+                  );
 
                   if (context.mounted) {
                     Navigator.pop(context);
@@ -580,8 +592,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
           ),
           ElevatedButton(
             onPressed: () async {
-              await context.read<ProductCubit>()
-                  .deleteProduct(product.id);
+              await context.read<ProductCubit>().deleteProduct(product.id);
 
               if (context.mounted) {
                 Navigator.pop(context);
@@ -593,9 +604,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                 );
               }
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.danger,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
             child: const Text('Xóa'),
           ),
         ],
@@ -699,16 +708,21 @@ class _ProductCard extends StatelessWidget {
                       Icon(
                         Icons.inventory,
                         size: 14,
-                        color: isLowStock ? AppColors.danger : AppColors.textSecondary,
+                        color: isLowStock
+                            ? AppColors.danger
+                            : AppColors.textSecondary,
                       ),
                       const SizedBox(width: 4),
                       Text(
                         'Tồn kho: ${product.stockQuantity} ${product.unit ?? ''}',
                         style: AppTextStyles.roboto(
                           fontSize: 14,
-                          color:
-                              isLowStock ? AppColors.danger : AppColors.textSecondary,
-                          fontWeight: isLowStock ? FontWeight.bold : FontWeight.normal,
+                          color: isLowStock
+                              ? AppColors.danger
+                              : AppColors.textSecondary,
+                          fontWeight: isLowStock
+                              ? FontWeight.bold
+                              : FontWeight.normal,
                         ),
                       ),
                       if (isLowStock) ...[
@@ -837,4 +851,3 @@ class _FilterChip extends StatelessWidget {
     );
   }
 }
-

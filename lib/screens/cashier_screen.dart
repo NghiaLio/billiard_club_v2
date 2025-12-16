@@ -86,12 +86,15 @@ class _CashierScreenState extends State<CashierScreen> {
                         const SizedBox(height: AppSizes.paddingMedium),
                         BlocBuilder<TableCubit, TableState>(
                           builder: (context, state) {
-                            final occupiedTables =
-                                state is TableLoaded ? state.occupiedTables : [];
+                            final occupiedTables = state is TableLoaded
+                                ? state.occupiedTables
+                                : [];
 
                             if (occupiedTables.isEmpty) {
                               return Container(
-                                padding: const EdgeInsets.all(AppSizes.paddingLarge),
+                                padding: const EdgeInsets.all(
+                                  AppSizes.paddingLarge,
+                                ),
                                 decoration: BoxDecoration(
                                   border: Border.all(color: AppColors.border),
                                   borderRadius: BorderRadius.circular(8),
@@ -114,17 +117,21 @@ class _CashierScreenState extends State<CashierScreen> {
                                 itemCount: occupiedTables.length,
                                 itemBuilder: (context, index) {
                                   final table = occupiedTables[index];
-                                  final isSelected = _selectedTable?.id == table.id;
+                                  final isSelected =
+                                      _selectedTable?.id == table.id;
 
                                   return Padding(
                                     padding: EdgeInsets.only(
-                                      right: index < occupiedTables.length - 1 ? 8 : 0,
+                                      right: index < occupiedTables.length - 1
+                                          ? 8
+                                          : 0,
                                     ),
                                     child: InkWell(
                                       onTap: () {
                                         setState(() {
                                           _selectedTable = table;
-                                          _selectedPromotion = null; // Reset promotion when changing table
+                                          _selectedPromotion =
+                                              null; // Reset promotion when changing table
                                         });
                                       },
                                       borderRadius: BorderRadius.circular(8),
@@ -140,7 +147,9 @@ class _CashierScreenState extends State<CashierScreen> {
                                                 : AppColors.border,
                                             width: isSelected ? 2 : 1,
                                           ),
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
                                           color: isSelected
                                               ? AppColors.primary
                                               : Colors.white,
@@ -200,7 +209,9 @@ class _CashierScreenState extends State<CashierScreen> {
                         const SizedBox(height: AppSizes.paddingSmall),
                         BlocBuilder<MemberCubit, MemberState>(
                           builder: (context, state) {
-                            final activeMembers = state is MemberLoaded ? state.activeMembers : [];
+                            final activeMembers = state is MemberLoaded
+                                ? state.activeMembers
+                                : [];
                             return DropdownButtonFormField<Member>(
                               initialValue: _selectedMember,
                               decoration: const InputDecoration(
@@ -210,7 +221,9 @@ class _CashierScreenState extends State<CashierScreen> {
                               items: activeMembers.map((member) {
                                 return DropdownMenuItem<Member>(
                                   value: member,
-                                  child: Text('${member.fullName} - ${member.phone}'),
+                                  child: Text(
+                                    '${member.fullName} - ${member.phone}',
+                                  ),
                                 );
                               }).toList(),
                               onChanged: (member) {
@@ -224,7 +237,9 @@ class _CashierScreenState extends State<CashierScreen> {
                         if (_selectedMember != null) ...[
                           const SizedBox(height: AppSizes.paddingSmall),
                           Container(
-                            padding: const EdgeInsets.all(AppSizes.paddingSmall),
+                            padding: const EdgeInsets.all(
+                              AppSizes.paddingSmall,
+                            ),
                             decoration: BoxDecoration(
                               color: AppColors.success.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(8),
@@ -259,39 +274,50 @@ class _CashierScreenState extends State<CashierScreen> {
                             label: 'Tất cả',
                             icon: Icons.apps,
                             isSelected: _selectedCategory == 'all',
-                            onTap: () => setState(() => _selectedCategory = 'all'),
+                            onTap: () =>
+                                setState(() => _selectedCategory = 'all'),
                           ),
                           const SizedBox(width: AppSizes.paddingSmall),
                           _CategoryChip(
                             label: 'Đồ uống',
                             icon: Icons.local_drink,
-                            isSelected: _selectedCategory == ProductCategories.drink,
-                            onTap: () =>
-                                setState(() => _selectedCategory = ProductCategories.drink),
+                            isSelected:
+                                _selectedCategory == ProductCategories.drink,
+                            onTap: () => setState(
+                              () => _selectedCategory = ProductCategories.drink,
+                            ),
                           ),
                           const SizedBox(width: AppSizes.paddingSmall),
                           _CategoryChip(
                             label: 'Đồ ăn',
                             icon: Icons.restaurant,
-                            isSelected: _selectedCategory == ProductCategories.food,
-                            onTap: () =>
-                                setState(() => _selectedCategory = ProductCategories.food),
+                            isSelected:
+                                _selectedCategory == ProductCategories.food,
+                            onTap: () => setState(
+                              () => _selectedCategory = ProductCategories.food,
+                            ),
                           ),
                           const SizedBox(width: AppSizes.paddingSmall),
                           _CategoryChip(
                             label: 'Thiết bị',
                             icon: Icons.sports_baseball,
-                            isSelected: _selectedCategory == ProductCategories.equipment,
+                            isSelected:
+                                _selectedCategory ==
+                                ProductCategories.equipment,
                             onTap: () => setState(
-                                () => _selectedCategory = ProductCategories.equipment),
+                              () => _selectedCategory =
+                                  ProductCategories.equipment,
+                            ),
                           ),
                           const SizedBox(width: AppSizes.paddingSmall),
                           _CategoryChip(
                             label: 'Khác',
                             icon: Icons.category,
-                            isSelected: _selectedCategory == ProductCategories.other,
-                            onTap: () =>
-                                setState(() => _selectedCategory = ProductCategories.other),
+                            isSelected:
+                                _selectedCategory == ProductCategories.other,
+                            onTap: () => setState(
+                              () => _selectedCategory = ProductCategories.other,
+                            ),
                           ),
                         ],
                       ),
@@ -302,7 +328,9 @@ class _CashierScreenState extends State<CashierScreen> {
                   Expanded(
                     child: BlocBuilder<ProductCubit, ProductState>(
                       builder: (context, state) {
-                        var products = state is ProductLoaded ? state.availableProducts : [];
+                        var products = state is ProductLoaded
+                            ? state.availableProducts
+                            : [];
 
                         // Apply category filter
                         if (_selectedCategory != 'all') {
@@ -319,7 +347,9 @@ class _CashierScreenState extends State<CashierScreen> {
                                 Icon(
                                   Icons.inventory_2_outlined,
                                   size: 64,
-                                  color: AppColors.textSecondary.withOpacity(0.5),
+                                  color: AppColors.textSecondary.withOpacity(
+                                    0.5,
+                                  ),
                                 ),
                                 const SizedBox(height: AppSizes.paddingMedium),
                                 Text(
@@ -337,11 +367,11 @@ class _CashierScreenState extends State<CashierScreen> {
                           padding: const EdgeInsets.all(AppSizes.paddingMedium),
                           gridDelegate:
                               const SliverGridDelegateWithMaxCrossAxisExtent(
-                            maxCrossAxisExtent: 150,
-                            childAspectRatio: 0.85,
-                            crossAxisSpacing: AppSizes.paddingSmall,
-                            mainAxisSpacing: AppSizes.paddingSmall,
-                          ),
+                                maxCrossAxisExtent: 150,
+                                childAspectRatio: 0.85,
+                                crossAxisSpacing: AppSizes.paddingSmall,
+                                mainAxisSpacing: AppSizes.paddingSmall,
+                              ),
                           itemCount: products.length,
                           itemBuilder: (context, index) {
                             final product = products[index];
@@ -357,8 +387,7 @@ class _CashierScreenState extends State<CashierScreen> {
                                   );
                                   return;
                                 }
-                                context.read<OrderCubit>()
-                                    .addItemToOrder(
+                                context.read<OrderCubit>().addItemToOrder(
                                   _selectedTable!.id,
                                   product,
                                   1,
@@ -481,11 +510,7 @@ class _CashierScreenState extends State<CashierScreen> {
                   const Divider(),
                   // Order items
                   if (orderItems != null && orderItems.isNotEmpty) ...[
-                    _BillItem(
-                      label: 'Đồ ăn & uống',
-                      value: '',
-                      isHeader: true,
-                    ),
+                    _BillItem(label: 'Đồ ăn & uống', value: '', isHeader: true),
                     ...orderItems.map((item) {
                       return _OrderItemTile(
                         item: item,
@@ -508,10 +533,7 @@ class _CashierScreenState extends State<CashierScreen> {
                   ],
                   const SizedBox(height: AppSizes.paddingSmall),
                   // Promotions section - always visible
-                  _buildPromotionsSection(
-                    subtotal,
-                    playingHours,
-                  ),
+                  _buildPromotionsSection(subtotal, playingHours),
                 ],
               ),
             ),
@@ -520,9 +542,7 @@ class _CashierScreenState extends State<CashierScreen> {
               padding: const EdgeInsets.all(AppSizes.paddingMedium),
               decoration: BoxDecoration(
                 color: AppColors.background,
-                border: Border(
-                  top: BorderSide(color: AppColors.border),
-                ),
+                border: Border(top: BorderSide(color: AppColors.border)),
               ),
               child: Column(
                 children: [
@@ -533,7 +553,8 @@ class _CashierScreenState extends State<CashierScreen> {
                   if (memberDiscount > 0) ...[
                     const SizedBox(height: 4),
                     _BillItem(
-                      label: 'Giảm giá thẻ (${memberDiscountRate.toStringAsFixed(0)}%)',
+                      label:
+                          'Giảm giá thẻ (${memberDiscountRate.toStringAsFixed(0)}%)',
                       value: '-${AppFormatters.formatCurrency(memberDiscount)}',
                       valueColor: AppColors.success,
                     ),
@@ -542,7 +563,8 @@ class _CashierScreenState extends State<CashierScreen> {
                     const SizedBox(height: 4),
                     _BillItem(
                       label: 'Ưu đãi: ${_selectedPromotion!.name}',
-                      value: '-${AppFormatters.formatCurrency(promotionDiscount)}',
+                      value:
+                          '-${AppFormatters.formatCurrency(promotionDiscount)}',
                       valueColor: AppColors.warning,
                     ),
                   ],
@@ -601,17 +623,19 @@ class _CashierScreenState extends State<CashierScreen> {
     return BlocBuilder<PromotionCubit, PromotionState>(
       builder: (context, promotionState) {
         List<Promotion> applicablePromotions = [];
-        
-        if (promotionState is PromotionLoaded && promotionState.promotions.isNotEmpty) {
+
+        if (promotionState is PromotionLoaded &&
+            promotionState.promotions.isNotEmpty) {
           // Find applicable promotions
-          applicablePromotions =
-              context.read<PromotionCubit>().findApplicablePromotions(
-                    amount: subtotal,
-                    playingHours: playingHours,
-                    tableType: _selectedTable?.tableType,
-                    zone: _selectedTable?.zone,
-                    membershipType: _selectedMember?.membershipType,
-                  );
+          applicablePromotions = context
+              .read<PromotionCubit>()
+              .findApplicablePromotions(
+                amount: subtotal,
+                playingHours: playingHours,
+                tableType: _selectedTable?.tableType,
+                zone: _selectedTable?.zone,
+                membershipType: _selectedMember?.membershipType,
+              );
         }
 
         return Column(
@@ -703,7 +727,9 @@ class _CashierScreenState extends State<CashierScreen> {
                           ? AppColors.warning.withOpacity(0.1)
                           : AppColors.background,
                       border: Border.all(
-                        color: isSelected ? AppColors.warning : AppColors.border,
+                        color: isSelected
+                            ? AppColors.warning
+                            : AppColors.border,
                         width: isSelected ? 2 : 1,
                       ),
                       borderRadius: BorderRadius.circular(8),
@@ -714,7 +740,9 @@ class _CashierScreenState extends State<CashierScreen> {
                           isSelected
                               ? Icons.check_circle
                               : Icons.radio_button_unchecked,
-                          color: isSelected ? AppColors.warning : AppColors.border,
+                          color: isSelected
+                              ? AppColors.warning
+                              : AppColors.border,
                           size: 20,
                         ),
                         const SizedBox(width: 12),
@@ -971,7 +999,10 @@ class _CashierScreenState extends State<CashierScreen> {
                   vertical: AppSizes.paddingMedium,
                 ),
               ),
-              child: const Text('XÁC NHẬN THANH TOÁN'),
+              child: Text(
+                'XÁC NHẬN THANH TOÁN',
+                style: TextStyle(color: Colors.white),
+              ),
             ),
           ],
         ),
@@ -998,7 +1029,7 @@ class _CashierScreenState extends State<CashierScreen> {
   ) async {
     final authCubit = context.read<AuthCubit>();
     final authState = authCubit.state;
-    
+
     String createdById = '';
     if (authState is AuthAuthenticated) {
       createdById = authState.user.id;
@@ -1031,7 +1062,20 @@ class _CashierScreenState extends State<CashierScreen> {
     // Save order if exists
     final orderState = context.read<OrderCubit>().state;
     if (orderState.getOrderItemsForTable(table.id) != null) {
-      await context.read<OrderCubit>().saveOrder(table.id, table.currentSessionId!);
+      await context.read<OrderCubit>().saveOrder(
+        table.id,
+        table.currentSessionId!,
+      );
+
+      // Deduct stock for food, drink and other items (not equipment)
+      final orderItems = orderState.getOrderItemsForTable(table.id)!;
+      final productCubit = context.read<ProductCubit>();
+
+      for (final item in orderItems) {
+        if (item.category != 'equipment') {
+          await productCubit.updateStock(item.productId, -item.quantity);
+        }
+      }
     }
 
     // Close table
@@ -1061,10 +1105,7 @@ class _ProductItem extends StatelessWidget {
   final dynamic product;
   final VoidCallback onTap;
 
-  const _ProductItem({
-    required this.product,
-    required this.onTap,
-  });
+  const _ProductItem({required this.product, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -1229,7 +1270,9 @@ class _BillItem extends StatelessWidget {
             label,
             style: AppTextStyles.roboto(
               fontSize: isTotal ? 18 : (isHeader ? 16 : 14),
-              fontWeight: isTotal || isHeader ? FontWeight.bold : FontWeight.normal,
+              fontWeight: isTotal || isHeader
+                  ? FontWeight.bold
+                  : FontWeight.normal,
               color: isTotal ? AppColors.primary : AppColors.textPrimary,
             ),
           ),
@@ -1238,8 +1281,11 @@ class _BillItem extends StatelessWidget {
               value,
               style: AppTextStyles.roboto(
                 fontSize: isTotal ? 20 : (isHeader ? 16 : 14),
-                fontWeight: isTotal || isHeader ? FontWeight.bold : FontWeight.normal,
-                color: valueColor ??
+                fontWeight: isTotal || isHeader
+                    ? FontWeight.bold
+                    : FontWeight.normal,
+                color:
+                    valueColor ??
                     (isTotal ? AppColors.success : AppColors.textPrimary),
               ),
             ),
@@ -1268,10 +1314,7 @@ class _CategoryChip extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),
       child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 8,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.primary : Colors.grey[200],
           borderRadius: BorderRadius.circular(20),
@@ -1299,4 +1342,3 @@ class _CategoryChip extends StatelessWidget {
     );
   }
 }
-

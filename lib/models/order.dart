@@ -66,6 +66,7 @@ class OrderItem {
   final String orderId;
   final String productId;
   final String productName;
+  final String? category;
   final double price;
   final int quantity;
   final double subtotal;
@@ -75,6 +76,7 @@ class OrderItem {
     required this.orderId,
     required this.productId,
     required this.productName,
+    this.category,
     required this.price,
     required this.quantity,
     required this.subtotal,
@@ -86,6 +88,7 @@ class OrderItem {
       'order_id': orderId,
       'product_id': productId,
       'product_name': productName,
+      'category': category,
       'price': price,
       'quantity': quantity,
       'subtotal': subtotal,
@@ -98,6 +101,7 @@ class OrderItem {
       orderId: map['order_id'],
       productId: map['product_id'],
       productName: map['product_name'],
+      category: map['category'],
       price: map['price'],
       quantity: map['quantity'],
       subtotal: map['subtotal'],
@@ -109,6 +113,7 @@ class OrderItem {
     String? orderId,
     String? productId,
     String? productName,
+    String? category,
     double? price,
     int? quantity,
     double? subtotal,
@@ -118,10 +123,10 @@ class OrderItem {
       orderId: orderId ?? this.orderId,
       productId: productId ?? this.productId,
       productName: productName ?? this.productName,
+      category: category ?? this.category,
       price: price ?? this.price,
       quantity: quantity ?? this.quantity,
       subtotal: subtotal ?? this.subtotal,
     );
   }
 }
-

@@ -63,7 +63,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     onTap: () => setState(() => _selectedTab = 1),
                   ),
                   _TabItem(
-                    icon: Icons.location_city,
+                    icon: Icons.flag,
                     label: 'Khu vực',
                     isSelected: _selectedTab == 2,
                     onTap: () => setState(() => _selectedTab = 2),
@@ -85,9 +85,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const VerticalDivider(width: 1),
             // Content
-            Expanded(
-              child: _getTabContent(),
-            ),
+            Expanded(child: _getTabContent()),
           ],
         ),
       ),
@@ -180,10 +178,18 @@ class _RevenueTabState extends State<_RevenueTab> {
   Widget build(BuildContext context) {
     return BlocBuilder<InvoiceCubit, InvoiceState>(
       builder: (context, state) {
-        final todayRevenue = state is InvoiceLoaded ? state.getTodayRevenue() : 0.0;
-        final monthRevenue = state is InvoiceLoaded ? state.getThisMonthRevenue() : 0.0;
-        final totalRevenue = state is InvoiceLoaded ? state.getTotalRevenue() : 0.0;
-        final todayCount = state is InvoiceLoaded ? state.getTodayInvoiceCount() : 0;
+        final todayRevenue = state is InvoiceLoaded
+            ? state.getTodayRevenue()
+            : 0.0;
+        final monthRevenue = state is InvoiceLoaded
+            ? state.getThisMonthRevenue()
+            : 0.0;
+        final totalRevenue = state is InvoiceLoaded
+            ? state.getTotalRevenue()
+            : 0.0;
+        final todayCount = state is InvoiceLoaded
+            ? state.getTodayInvoiceCount()
+            : 0;
 
         return SingleChildScrollView(
           padding: const EdgeInsets.all(AppSizes.paddingLarge),
@@ -216,7 +222,9 @@ class _RevenueTabState extends State<_RevenueTab> {
                       title: 'Doanh thu tháng này',
                       value: AppFormatters.formatCurrency(monthRevenue),
                       // ignore: prefer_interpolation_to_compose_strings
-                      subtitle: DateTime.now().month.toString() + '/' +
+                      subtitle:
+                          DateTime.now().month.toString() +
+                          '/' +
                           DateTime.now().year.toString(),
                       icon: Icons.calendar_month,
                       color: AppColors.info,
@@ -227,7 +235,8 @@ class _RevenueTabState extends State<_RevenueTab> {
                     child: _StatCard(
                       title: 'Tổng doanh thu',
                       value: AppFormatters.formatCurrency(totalRevenue),
-                      subtitle: '${state is InvoiceLoaded ? state.invoices : [].length} hóa đơn',
+                      subtitle:
+                          '${state is InvoiceLoaded ? state.invoices : [].length} hóa đơn',
                       icon: Icons.account_balance_wallet,
                       color: AppColors.primary,
                     ),
@@ -259,7 +268,9 @@ class _RevenueTabState extends State<_RevenueTab> {
                           Expanded(
                             child: ListTile(
                               title: const Text('Từ ngày'),
-                              subtitle: Text(AppFormatters.formatDate(_startDate)),
+                              subtitle: Text(
+                                AppFormatters.formatDate(_startDate),
+                              ),
                               leading: const Icon(Icons.calendar_today),
                               onTap: () async {
                                 final date = await showDatePicker(
@@ -277,7 +288,9 @@ class _RevenueTabState extends State<_RevenueTab> {
                           Expanded(
                             child: ListTile(
                               title: const Text('Đến ngày'),
-                              subtitle: Text(AppFormatters.formatDate(_endDate)),
+                              subtitle: Text(
+                                AppFormatters.formatDate(_endDate),
+                              ),
                               leading: const Icon(Icons.calendar_today),
                               onTap: () async {
                                 final date = await showDatePicker(
@@ -300,8 +313,9 @@ class _RevenueTabState extends State<_RevenueTab> {
                           padding: const EdgeInsets.all(AppSizes.paddingLarge),
                           decoration: BoxDecoration(
                             color: AppColors.success.withOpacity(0.1),
-                            borderRadius:
-                                BorderRadius.circular(AppSizes.borderRadius),
+                            borderRadius: BorderRadius.circular(
+                              AppSizes.borderRadius,
+                            ),
                           ),
                           child: Column(
                             children: [
@@ -315,10 +329,12 @@ class _RevenueTabState extends State<_RevenueTab> {
                               const SizedBox(height: AppSizes.paddingSmall),
                               Text(
                                 AppFormatters.formatCurrency(
-                                  state is InvoiceLoaded ? state.getRevenueByDateRange(
-                                    _startDate,
-                                    _endDate.add(const Duration(days: 1)),
-                                  ) : 0.0,
+                                  state is InvoiceLoaded
+                                      ? state.getRevenueByDateRange(
+                                          _startDate,
+                                          _endDate.add(const Duration(days: 1)),
+                                        )
+                                      : 0.0,
                                 ),
                                 style: AppTextStyles.roboto(
                                   fontSize: 32,
@@ -391,16 +407,11 @@ class _InvoicesTab extends StatelessWidget {
               child: ExpansionTile(
                 leading: CircleAvatar(
                   backgroundColor: AppColors.success.withOpacity(0.1),
-                  child: const Icon(
-                    Icons.receipt,
-                    color: AppColors.success,
-                  ),
+                  child: const Icon(Icons.receipt, color: AppColors.success),
                 ),
                 title: Text(
                   '${invoice.tableName} - ${AppFormatters.formatCurrency(invoice.totalAmount)}',
-                  style: AppTextStyles.roboto(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: AppTextStyles.roboto(fontWeight: FontWeight.bold),
                 ),
                 subtitle: Text(
                   AppFormatters.formatDateTime(invoice.createdAt),
@@ -426,15 +437,21 @@ class _InvoicesTab extends StatelessWidget {
                           ),
                         _InvoiceDetailRow(
                           label: 'Thời gian chơi',
-                          value: AppFormatters.formatDuration(invoice.playingHours),
+                          value: AppFormatters.formatDuration(
+                            invoice.playingHours,
+                          ),
                         ),
                         _InvoiceDetailRow(
                           label: 'Tiền bàn',
-                          value: AppFormatters.formatCurrency(invoice.tableCharge),
+                          value: AppFormatters.formatCurrency(
+                            invoice.tableCharge,
+                          ),
                         ),
                         _InvoiceDetailRow(
                           label: 'Đồ ăn & uống',
-                          value: AppFormatters.formatCurrency(invoice.orderTotal),
+                          value: AppFormatters.formatCurrency(
+                            invoice.orderTotal,
+                          ),
                         ),
                         if (invoice.discount > 0)
                           _InvoiceDetailRow(
@@ -446,14 +463,17 @@ class _InvoicesTab extends StatelessWidget {
                         const Divider(),
                         _InvoiceDetailRow(
                           label: 'TỔNG',
-                          value: AppFormatters.formatCurrency(invoice.totalAmount),
+                          value: AppFormatters.formatCurrency(
+                            invoice.totalAmount,
+                          ),
                           isBold: true,
                         ),
                         const SizedBox(height: AppSizes.paddingSmall),
                         _InvoiceDetailRow(
                           label: 'Thanh toán',
-                          value:
-                              PaymentMethods.getMethodName(invoice.paymentMethod),
+                          value: PaymentMethods.getMethodName(
+                            invoice.paymentMethod,
+                          ),
                         ),
                         _InvoiceDetailRow(
                           label: 'Thời gian',
@@ -528,7 +548,9 @@ class _InfoTabState extends State<_InfoTab> {
             const SizedBox(height: AppSizes.paddingMedium),
             _DangerItem(text: 'Tất cả bàn billiard và trạng thái'),
             _DangerItem(text: 'Tất cả thành viên'),
-            _DangerItem(text: 'Tất cả nhân viên (trừ tài khoản admin mặc định)'),
+            _DangerItem(
+              text: 'Tất cả nhân viên (trừ tài khoản admin mặc định)',
+            ),
             _DangerItem(text: 'Tất cả hàng hóa và tồn kho'),
             _DangerItem(text: 'Tất cả đơn hàng và hóa đơn'),
             _DangerItem(text: 'Tất cả khu vực và ưu đãi'),
@@ -573,9 +595,7 @@ class _InfoTabState extends State<_InfoTab> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.danger,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
             child: const Text('XÁC NHẬN RESET'),
           ),
         ],
@@ -656,10 +676,7 @@ class _InfoTabState extends State<_InfoTab> {
       // Show error message
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Lỗi: $e'),
-            backgroundColor: AppColors.danger,
-          ),
+          SnackBar(content: Text('Lỗi: $e'), backgroundColor: AppColors.danger),
         );
       }
     } finally {
@@ -750,14 +767,26 @@ class _InfoTabState extends State<_InfoTab> {
                     ),
                   ),
                   const SizedBox(height: AppSizes.paddingMedium),
-                  _FeatureItem(icon: Icons.table_bar, text: 'Quản lý bàn billiard'),
+                  _FeatureItem(
+                    icon: Icons.table_bar,
+                    text: 'Quản lý bàn billiard',
+                  ),
                   _FeatureItem(icon: Icons.people, text: 'Quản lý thành viên'),
                   _FeatureItem(icon: Icons.person, text: 'Quản lý nhân viên'),
                   _FeatureItem(icon: Icons.inventory, text: 'Quản lý hàng hóa'),
-                  _FeatureItem(icon: Icons.point_of_sale, text: 'Thu ngân & thanh toán'),
-                  _FeatureItem(icon: Icons.bar_chart, text: 'Báo cáo doanh thu'),
+                  _FeatureItem(
+                    icon: Icons.point_of_sale,
+                    text: 'Thu ngân & thanh toán',
+                  ),
+                  _FeatureItem(
+                    icon: Icons.bar_chart,
+                    text: 'Báo cáo doanh thu',
+                  ),
                   _FeatureItem(icon: Icons.receipt, text: 'Quản lý hóa đơn'),
-                  _FeatureItem(icon: Icons.discount, text: 'Hệ thống thành viên & giảm giá'),
+                  _FeatureItem(
+                    icon: Icons.discount,
+                    text: 'Hệ thống thành viên & giảm giá',
+                  ),
                 ],
               ),
             ),
@@ -819,7 +848,9 @@ class _InfoTabState extends State<_InfoTab> {
                               height: 20,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
                               ),
                             )
                           : const Icon(Icons.refresh),
@@ -1006,10 +1037,7 @@ class _FeatureItem extends StatelessWidget {
   final IconData icon;
   final String text;
 
-  const _FeatureItem({
-    required this.icon,
-    required this.text,
-  });
+  const _FeatureItem({required this.icon, required this.text});
 
   @override
   Widget build(BuildContext context) {
@@ -1077,4 +1105,3 @@ class _PromotionsTab extends StatelessWidget {
     return const PromotionsManagementScreen();
   }
 }
-

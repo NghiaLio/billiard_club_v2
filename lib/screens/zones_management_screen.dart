@@ -88,7 +88,7 @@ class _ZonesManagementScreenState extends State<ZonesManagementScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      Icons.location_city,
+                      Icons.flag,
                       size: 80,
                       color: AppColors.textSecondary.withOpacity(0.5),
                     ),
@@ -216,7 +216,9 @@ class _ZonesManagementScreenState extends State<ZonesManagementScreen> {
   void _showEditZoneDialog(BuildContext context, Zone zone) {
     final nameController = TextEditingController(text: zone.name);
     final descController = TextEditingController(text: zone.description ?? '');
-    final orderController = TextEditingController(text: zone.sortOrder.toString());
+    final orderController = TextEditingController(
+      text: zone.sortOrder.toString(),
+    );
     bool isActive = zone.isActive;
 
     showDialog(
@@ -302,7 +304,9 @@ class _ZonesManagementScreenState extends State<ZonesManagementScreen> {
                   );
                 }
               },
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+              ),
               child: const Text('Cập nhật'),
             ),
           ],
@@ -339,9 +343,7 @@ class _ZonesManagementScreenState extends State<ZonesManagementScreen> {
                 );
               }
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.danger,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
             child: const Text('Xóa'),
           ),
         ],
@@ -449,4 +451,3 @@ class _ZoneCard extends StatelessWidget {
     );
   }
 }
-

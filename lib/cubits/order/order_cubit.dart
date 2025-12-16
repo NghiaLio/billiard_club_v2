@@ -38,6 +38,7 @@ class OrderCubit extends Cubit<OrderState> {
         orderId: '', // Will be set when order is saved
         productId: product.id,
         productName: product.name,
+        category: product.category,
         price: product.price,
         quantity: quantity,
         subtotal: product.price * quantity,
@@ -128,4 +129,3 @@ class OrderCubit extends Cubit<OrderState> {
     return await DatabaseService.instance.getOrdersByTableId(tableId);
   }
 }
-

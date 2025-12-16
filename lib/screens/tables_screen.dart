@@ -1,4 +1,4 @@
-// ignore_for_file: deprecated_member_use
+// ignore_for_file: deprecated_member_use, use_build_context_synchronously
 
 import 'dart:async';
 import 'package:billiard_club/services/excel_service.dart';
@@ -11,9 +11,11 @@ import '../cubits/table/table_state.dart';
 import '../cubits/zone/zone_cubit.dart';
 import '../cubits/zone/zone_state.dart';
 import '../models/billiard_table.dart';
+import '../models/zone.dart';
 import '../utils/constants.dart';
 import '../utils/formatters.dart';
 import '../widgets/desktop_dialog.dart';
+import '../models/zone.dart';
 
 class TablesScreen extends StatefulWidget {
   const TablesScreen({super.key});
@@ -46,20 +48,22 @@ class _TablesScreenState extends State<TablesScreen> {
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
         actions: [
-          listTables.isEmpty ? Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSizes.paddingMedium,
-            ),
-            child: ElevatedButton.icon(
-              onPressed: () => _showImportTableDialog(context),
-              icon: const Icon(Icons.add),
-              label: const Text('Nhập dữ liệu bàn'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-              ),
-            ),
-          ): SizedBox.shrink(),
+          listTables.isEmpty
+              ? Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSizes.paddingMedium,
+                  ),
+                  child: ElevatedButton.icon(
+                    onPressed: () => _showImportTableDialog(context),
+                    icon: const Icon(Icons.add),
+                    label: const Text('Nhập dữ liệu bàn'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                )
+              : SizedBox.shrink(),
           Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: AppSizes.paddingMedium,
@@ -132,7 +136,7 @@ class _TablesScreenState extends State<TablesScreen> {
                       final zones = zoneState is ZoneLoaded
                           ? zoneState.zones
                           : [];
-                      
+
                       return Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 12,
@@ -155,10 +159,12 @@ class _TablesScreenState extends State<TablesScreen> {
                               value: 'all',
                               child: Text('Tất cả khu vực'),
                             ),
-                            ...zones.map((zone) => DropdownMenuItem(
-                                  value: zone.name,
-                                  child: Text(zone.name),
-                                )),
+                            ...zones.map(
+                              (zone) => DropdownMenuItem(
+                                value: zone.name,
+                                child: Text(zone.name),
+                              ),
+                            ),
                           ],
                           onChanged: (value) {
                             if (value != null) {
@@ -188,7 +194,9 @@ class _TablesScreenState extends State<TablesScreen> {
 
                   // Apply zone filter
                   if (_filterZone != 'all') {
-                    tables = tables.where((t) => t.zone == _filterZone).toList();
+                    tables = tables
+                        .where((t) => t.zone == _filterZone)
+                        .toList();
                   }
 
                   if (tables.isEmpty) {
@@ -254,10 +262,8 @@ class _TablesScreenState extends State<TablesScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => _TableActionsSheet(
-        table: table,
-        tableProvider: tableProvider,
-      ),
+      builder: (context) =>
+          _TableActionsSheet(table: table, tableProvider: tableProvider),
     );
   }
 }
@@ -266,10 +272,7 @@ class _TableActionsSheet extends StatefulWidget {
   final BilliardTable table;
   final TableCubit tableProvider;
 
-  const _TableActionsSheet({
-    required this.table,
-    required this.tableProvider,
-  });
+  const _TableActionsSheet({required this.table, required this.tableProvider});
 
   @override
   State<_TableActionsSheet> createState() => _TableActionsSheetState();
@@ -292,6 +295,51 @@ class _TableActionsSheetState extends State<_TableActionsSheet> {
   void dispose() {
     _timer?.cancel();
     super.dispose();
+  }
+
+  void _showReserveDialog(
+    BuildContext context,
+    BilliardTable table,
+    TableCubit tableCubit,
+  ) {
+    final nameController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => DesktopDialog(
+        title: 'Đặt ${table.tableName}',
+        maxWidth: 500,
+        content: TextField(
+          controller: nameController,
+          decoration: const InputDecoration(
+            labelText: 'Tên khách hàng hoặc SĐT *',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Hủy'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (nameController.text.isNotEmpty) {
+                await tableCubit.reserveTable(table.id, nameController.text);
+
+                if (dialogContext.mounted) {
+                  Navigator.pop(dialogContext); // Close dialog
+                  if (context.mounted) {
+                    Navigator.pop(context); // Close bottom sheet
+                  }
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.warning),
+            child: const Text('Đặt bàn'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showEndSessionDialog() {
@@ -333,181 +381,177 @@ class _TableActionsSheetState extends State<_TableActionsSheet> {
   @override
   Widget build(BuildContext context) {
     return Container(
-        padding: const EdgeInsets.all(AppSizes.paddingLarge),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              widget.table.tableName,
-              style: AppTextStyles.roboto(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
+      padding: const EdgeInsets.all(AppSizes.paddingLarge),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            widget.table.tableName,
+            style: AppTextStyles.roboto(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: AppSizes.paddingSmall),
+          Text(
+            '${AppFormatters.formatCurrency(widget.table.pricePerHour)}/giờ',
+            style: AppTextStyles.roboto(
+              fontSize: 16,
+              color: AppColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: AppSizes.paddingLarge),
+          if (widget.table.status == 'available') ...[
+            ElevatedButton.icon(
+              onPressed: () async {
+                await widget.tableProvider.openTable(widget.table.id);
+                if (context.mounted) Navigator.pop(context);
+              },
+              icon: const Icon(Icons.play_arrow),
+              label: const Text('Mở bàn'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.success,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.all(AppSizes.paddingMedium),
               ),
-              textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppSizes.paddingSmall),
-            Text(
-              '${AppFormatters.formatCurrency(widget.table.pricePerHour)}/giờ',
-              style: AppTextStyles.roboto(
-                fontSize: 16,
-                color: AppColors.textSecondary,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: AppSizes.paddingLarge),
-            if (widget.table.status == 'available') ...[
-              ElevatedButton.icon(
-                onPressed: () async {
-                  await widget.tableProvider.openTable(widget.table.id);
-                  if (context.mounted) Navigator.pop(context);
-                },
-                icon: const Icon(Icons.play_arrow),
-                label: const Text('Mở bàn'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.success,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.all(AppSizes.paddingMedium),
-                ),
-              ),
-              const SizedBox(height: AppSizes.paddingSmall),
-              ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.pop(context);
-                  context.findAncestorStateOfType<_TablesScreenState>()!
-                      ._showReserveTableDialog(context, widget.table);
-                },
-                icon: const Icon(Icons.bookmark),
-                label: const Text('Đặt bàn'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.warning,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.all(AppSizes.paddingMedium),
-                ),
-              ),
-            ] else if (widget.table.status == 'occupied') ...[
-              Container(
+            ElevatedButton.icon(
+              onPressed: () {
+                _showReserveDialog(context, widget.table, widget.tableProvider);
+              },
+              icon: const Icon(Icons.bookmark),
+              label: const Text('Đặt bàn'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.warning,
+                foregroundColor: Colors.white,
                 padding: const EdgeInsets.all(AppSizes.paddingMedium),
-                decoration: BoxDecoration(
-                  color: AppColors.info.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                ),
-                child: Column(
-                  children: [
+              ),
+            ),
+          ] else if (widget.table.status == 'occupied') ...[
+            Container(
+              padding: const EdgeInsets.all(AppSizes.paddingMedium),
+              decoration: BoxDecoration(
+                color: AppColors.info.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    'Thời gian chơi',
+                    style: AppTextStyles.roboto(
+                      fontSize: 14,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: AppSizes.paddingSmall),
+                  Text(
+                    AppFormatters.formatDuration(widget.table.playingDuration),
+                    style: AppTextStyles.roboto(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  const SizedBox(height: AppSizes.paddingSmall),
+                  Text(
+                    'Chi phí hiện tại: ${AppFormatters.formatCurrency(widget.table.currentCost)}',
+                    style: AppTextStyles.roboto(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.success,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSizes.paddingMedium),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pop(context);
+                _showEndSessionDialog();
+              },
+              icon: const Icon(Icons.stop_circle),
+              label: const Text('Kết thúc'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.danger,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.all(AppSizes.paddingMedium),
+              ),
+            ),
+          ] else if (widget.table.status == 'reserved') ...[
+            Container(
+              padding: const EdgeInsets.all(AppSizes.paddingMedium),
+              decoration: BoxDecoration(
+                color: AppColors.warning.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    'Đặt bởi: ${widget.table.reservedBy ?? "N/A"}',
+                    style: AppTextStyles.roboto(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  if (widget.table.reservationTime != null) ...[
+                    const SizedBox(height: AppSizes.paddingSmall),
                     Text(
-                      'Thời gian chơi',
+                      'Lúc: ${AppFormatters.formatDateTime(widget.table.reservationTime!)}',
                       style: AppTextStyles.roboto(
                         fontSize: 14,
                         color: AppColors.textSecondary,
                       ),
                     ),
-                    const SizedBox(height: AppSizes.paddingSmall),
-                    Text(
-                      AppFormatters.formatDuration(widget.table.playingDuration),
-                      style: AppTextStyles.roboto(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                    const SizedBox(height: AppSizes.paddingSmall),
-                    Text(
-                      'Chi phí hiện tại: ${AppFormatters.formatCurrency(widget.table.currentCost)}',
-                      style: AppTextStyles.roboto(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.success,
-                      ),
-                    ),
                   ],
-                ),
+                ],
               ),
-              const SizedBox(height: AppSizes.paddingMedium),
-              ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _showEndSessionDialog();
-                },
-                icon: const Icon(Icons.stop_circle),
-                label: const Text('Kết thúc'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.danger,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.all(AppSizes.paddingMedium),
-                ),
-              ),
-            ] else if (widget.table.status == 'reserved') ...[
-              Container(
-                padding: const EdgeInsets.all(AppSizes.paddingMedium),
-                decoration: BoxDecoration(
-                  color: AppColors.warning.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      'Đặt bởi: ${widget.table.reservedBy ?? "N/A"}',
-                      style: AppTextStyles.roboto(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    if (widget.table.reservationTime != null) ...[
-                      const SizedBox(height: AppSizes.paddingSmall),
-                      Text(
-                        'Lúc: ${AppFormatters.formatDateTime(widget.table.reservationTime!)}',
-                        style: AppTextStyles.roboto(
-                          fontSize: 14,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              const SizedBox(height: AppSizes.paddingMedium),
-              ElevatedButton.icon(
-                onPressed: () async {
-                  await widget.tableProvider.openTable(widget.table.id);
-                  if (context.mounted) Navigator.pop(context);
-                },
-                icon: const Icon(Icons.play_arrow),
-                label: const Text('Bắt đầu chơi'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.success,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.all(AppSizes.paddingMedium),
-                ),
-              ),
-              const SizedBox(height: AppSizes.paddingSmall),
-              ElevatedButton.icon(
-                onPressed: () async {
-                  await widget.tableProvider.cancelReservation(widget.table.id);
-                  if (context.mounted) Navigator.pop(context);
-                },
-                icon: const Icon(Icons.cancel),
-                label: const Text('Hủy đặt bàn'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.danger,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.all(AppSizes.paddingMedium),
-                ),
-              ),
-            ],
+            ),
             const SizedBox(height: AppSizes.paddingMedium),
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Đóng'),
+            ElevatedButton.icon(
+              onPressed: () async {
+                await widget.tableProvider.openTable(widget.table.id);
+                if (context.mounted) Navigator.pop(context);
+              },
+              icon: const Icon(Icons.play_arrow),
+              label: const Text('Bắt đầu chơi'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.success,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.all(AppSizes.paddingMedium),
+              ),
+            ),
+            const SizedBox(height: AppSizes.paddingSmall),
+            ElevatedButton.icon(
+              onPressed: () async {
+                await widget.tableProvider.cancelReservation(widget.table.id);
+                if (context.mounted) Navigator.pop(context);
+              },
+              icon: const Icon(Icons.cancel),
+              label: const Text('Hủy đặt bàn'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.danger,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.all(AppSizes.paddingMedium),
+              ),
             ),
           ],
-        ),
-      );
+          const SizedBox(height: AppSizes.paddingMedium),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Đóng'),
+          ),
+        ],
+      ),
+    );
   }
 }
 
 extension _TablesScreenStateMethods on _TablesScreenState {
-
-
   void _showImportTableDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -522,17 +566,74 @@ extension _TablesScreenStateMethods on _TablesScreenState {
                 final file = await ExcelService().loadExcelFile();
                 if (file != null) {
                   final excel = await ExcelService().readExcelFile(file);
+                  final zoneCubit = context.read<ZoneCubit>();
+                  final tableCubit = context.read<TableCubit>();
+
+                  // Lấy danh sách zone hiện có
+                  await zoneCubit.loadZones();
+                  final zoneState = zoneCubit.state;
+                  final existingZones = zoneState is ZoneLoaded
+                      ? zoneState.zones
+                      : <Zone>[];
+                  final existingZoneNames = existingZones
+                      .map((z) => z.name)
+                      .toSet();
+
+                  // Set để theo dõi zone đã thêm trong lần import này
+                  final addedZones = <String>{};
+
                   for (var sheet in excel.sheets.values) {
-                    for (var row in sheet.rows) {
+                    // Bỏ qua header row (row đầu tiên)
+                    final rows = sheet.rows.skip(1).toList();
+
+                    for (var row in rows) {
+                      if (row.isEmpty || row.length < 6) continue;
+
+                      final zoneName = row[3]?.value?.toString() ?? '';
+                      final zoneDescription = row[5]?.value?.toString() ?? '';
+
+                      // Kiểm tra và thêm zone mới nếu chưa tồn tại
+                      if (zoneName.isNotEmpty &&
+                          !existingZoneNames.contains(zoneName) &&
+                          !addedZones.contains(zoneName)) {
+                        final newZone = Zone(
+                          id: const Uuid().v4(),
+                          name: zoneName,
+                          description: zoneDescription.isNotEmpty
+                              ? zoneDescription
+                              : 'Tự động tạo từ Excel',
+                          sortOrder: existingZones.length + addedZones.length,
+                          isActive: true,
+                          createdAt: DateTime.now(),
+                        );
+                        await zoneCubit.addZone(newZone);
+                        addedZones.add(zoneName);
+                      }
+
+                      // Thêm bàn
                       final table = BilliardTable(
-                        id: const Uuid().v4(),
-                        tableName: row[0] as String,
-                        tableType: row[1] as String,
-                        zone: row[2] as String,
-                        pricePerHour: double.parse(row[3] as String),
+                        id: row[0]?.value?.toString() ?? const Uuid().v4(),
+                        tableName: row[1]?.value?.toString() ?? '',
+                        tableType: row[2]?.value?.toString() ?? '',
+                        zone: zoneName,
+                        pricePerHour:
+                            double.tryParse(row[4]?.value?.toString() ?? '0') ??
+                            0,
                       );
-                      await context.read<TableCubit>().addTable(table);
+                      await tableCubit.addTable(table);
                     }
+                  }
+
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Đã nhập ${addedZones.length} zone và dữ liệu bàn thành công',
+                        ),
+                        backgroundColor: AppColors.success,
+                      ),
+                    );
                   }
                 }
               },
@@ -548,6 +649,7 @@ extension _TablesScreenStateMethods on _TablesScreenState {
       ),
     );
   }
+
   void _showAddTableDialog(BuildContext context) {
     final nameController = TextEditingController();
     final priceController = TextEditingController();
@@ -578,10 +680,10 @@ extension _TablesScreenStateMethods on _TablesScreenState {
                   border: OutlineInputBorder(),
                 ),
                 items: TableTypes.types
-                    .map((type) => DropdownMenuItem(
-                          value: type,
-                          child: Text(type),
-                        ))
+                    .map(
+                      (type) =>
+                          DropdownMenuItem(value: type, child: Text(type)),
+                    )
                     .toList(),
                 onChanged: (value) {
                   setState(() => tableType = value!);
@@ -595,10 +697,7 @@ extension _TablesScreenStateMethods on _TablesScreenState {
                   border: OutlineInputBorder(),
                 ),
                 items: TableZones.zones
-                    .map((z) => DropdownMenuItem(
-                          value: z,
-                          child: Text(z),
-                        ))
+                    .map((z) => DropdownMenuItem(value: z, child: Text(z)))
                     .toList(),
                 onChanged: (value) {
                   setState(() => zone = value!);
@@ -637,7 +736,9 @@ extension _TablesScreenStateMethods on _TablesScreenState {
                   if (context.mounted) Navigator.pop(context);
                 }
               },
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+              ),
               child: const Text('Thêm'),
             ),
           ],
@@ -678,10 +779,10 @@ extension _TablesScreenStateMethods on _TablesScreenState {
                   border: OutlineInputBorder(),
                 ),
                 items: TableTypes.types
-                    .map((type) => DropdownMenuItem(
-                          value: type,
-                          child: Text(type),
-                        ))
+                    .map(
+                      (type) =>
+                          DropdownMenuItem(value: type, child: Text(type)),
+                    )
                     .toList(),
                 onChanged: (value) {
                   setState(() => tableType = value!);
@@ -695,10 +796,7 @@ extension _TablesScreenStateMethods on _TablesScreenState {
                   border: OutlineInputBorder(),
                 ),
                 items: TableZones.zones
-                    .map((z) => DropdownMenuItem(
-                          value: z,
-                          child: Text(z),
-                        ))
+                    .map((z) => DropdownMenuItem(value: z, child: Text(z)))
                     .toList(),
                 onChanged: (value) {
                   setState(() => zone = value!);
@@ -786,45 +884,6 @@ extension _TablesScreenStateMethods on _TablesScreenState {
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
             child: const Text('Xóa'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showReserveTableDialog(BuildContext context, BilliardTable table) {
-    final nameController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) => DesktopDialog(
-        title: 'Đặt ${table.tableName}',
-        maxWidth: 500,
-        content: TextField(
-          controller: nameController,
-          decoration: const InputDecoration(
-            labelText: 'Tên khách hàng hoặc SĐT *',
-            border: OutlineInputBorder(),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Hủy'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (nameController.text.isNotEmpty) {
-                await context.read<TableCubit>().reserveTable(
-                  table.id,
-                  nameController.text,
-                );
-
-                if (context.mounted) Navigator.pop(context);
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.warning),
-            child: const Text('Đặt bàn'),
           ),
         ],
       ),
@@ -978,7 +1037,8 @@ class _TableCardState extends State<_TableCard> {
                       onSelected: (value) {
                         if (value == 'edit' && widget.onEdit != null) {
                           widget.onEdit!();
-                        } else if (value == 'delete' && widget.onDelete != null) {
+                        } else if (value == 'delete' &&
+                            widget.onDelete != null) {
                           widget.onDelete!();
                         }
                       },
@@ -1013,58 +1073,57 @@ class _TableCardState extends State<_TableCard> {
                     ),
                     // Overlay tối cho bàn đang dùng
                     if (widget.table.status != 'available')
-                      Container(
-                        color: Colors.black.withOpacity(0.3),
-                      ),
+                      Container(color: Colors.black.withOpacity(0.3)),
                     // Thông tin ở giữa bàn
                     Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (widget.table.status == 'occupied' &&
-                                widget.table.startTime != null) ...[
-                              Text(
-                                AppFormatters.formatDuration(
-                                  widget.table.playingDuration,
-                                ),
-                                style: AppTextStyles.roboto(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (widget.table.status == 'occupied' &&
+                              widget.table.startTime != null) ...[
+                            Text(
+                              AppFormatters.formatDuration(
+                                widget.table.playingDuration,
                               ),
-                              const SizedBox(height: 4),
-                              Text(
-                                AppFormatters.formatCurrency(widget.table.currentCost),
-                                style: AppTextStyles.roboto(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white70,
-                                ),
+                              style: AppTextStyles.roboto(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
                               ),
-                            ] else ...[
-                              Text(
-                                widget.table.tableType.toUpperCase(),
-                                style: AppTextStyles.roboto(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              AppFormatters.formatCurrency(
+                                widget.table.currentCost,
                               ),
-                              const SizedBox(height: 4),
-                              Text(
-                                '${AppFormatters.formatCurrency(widget.table.pricePerHour)} /giờ',
-                                style: AppTextStyles.roboto(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.white,
-                                ),
+                              style: AppTextStyles.roboto(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white70,
                               ),
-                              
-                            ],
+                            ),
+                          ] else ...[
+                            Text(
+                              widget.table.tableType.toUpperCase(),
+                              style: AppTextStyles.roboto(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '${AppFormatters.formatCurrency(widget.table.pricePerHour)} /giờ',
+                              style: AppTextStyles.roboto(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.white,
+                              ),
+                            ),
                           ],
-                        ),
+                        ],
                       ),
+                    ),
                   ],
                 ),
               ),

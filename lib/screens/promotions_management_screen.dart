@@ -128,9 +128,7 @@ class _PromotionsManagementScreenState
   void _showAddPromotionDialog(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const _PromotionFormScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const _PromotionFormScreen()),
     );
   }
 
@@ -158,7 +156,9 @@ class _PromotionsManagementScreenState
           ),
           ElevatedButton(
             onPressed: () async {
-              await context.read<PromotionCubit>().deletePromotion(promotion.id);
+              await context.read<PromotionCubit>().deletePromotion(
+                promotion.id,
+              );
               if (context.mounted) {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -169,9 +169,7 @@ class _PromotionsManagementScreenState
                 );
               }
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.danger,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
             child: const Text('Xóa'),
           ),
         ],
@@ -299,7 +297,9 @@ class _PromotionCard extends StatelessWidget {
                   _InfoChip(
                     icon: Icons.calendar_today,
                     label: _formatDateRange(
-                        promotion.validFrom, promotion.validTo),
+                      promotion.validFrom,
+                      promotion.validTo,
+                    ),
                     color: AppColors.primary,
                   ),
                 if (promotion.minAmount != null)
@@ -388,12 +388,12 @@ class _PromotionFormScreenState extends State<_PromotionFormScreen> {
   String _type = 'percentage';
   bool _isActive = true;
   int _priority = 0;
-  
+
   // Time conditions
   String? _dayOfWeek;
   TimeOfDay? _startTime;
   TimeOfDay? _endTime;
-  
+
   // Date range
   DateTime? _validFrom;
   DateTime? _validTo;
@@ -404,12 +404,15 @@ class _PromotionFormScreenState extends State<_PromotionFormScreen> {
     final promo = widget.promotion;
     _nameController = TextEditingController(text: promo?.name ?? '');
     _descController = TextEditingController(text: promo?.description ?? '');
-    _valueController =
-        TextEditingController(text: promo?.value.toString() ?? '');
-    _minAmountController =
-        TextEditingController(text: promo?.minAmount?.toString() ?? '');
-    _minHoursController =
-        TextEditingController(text: promo?.minPlayingHours?.toString() ?? '');
+    _valueController = TextEditingController(
+      text: promo?.value.toString() ?? '',
+    );
+    _minAmountController = TextEditingController(
+      text: promo?.minAmount?.toString() ?? '',
+    );
+    _minHoursController = TextEditingController(
+      text: promo?.minPlayingHours?.toString() ?? '',
+    );
 
     if (promo != null) {
       _type = promo.type;
@@ -418,7 +421,7 @@ class _PromotionFormScreenState extends State<_PromotionFormScreen> {
       _dayOfWeek = promo.dayOfWeek;
       _validFrom = promo.validFrom;
       _validTo = promo.validTo;
-      
+
       if (promo.startTime != null) {
         final parts = promo.startTime!.split(':');
         _startTime = TimeOfDay(
@@ -488,7 +491,10 @@ class _PromotionFormScreenState extends State<_PromotionFormScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                     ),
-                    child: Text(widget.promotion == null ? 'Thêm' : 'Cập nhật'),
+                    child: Text(
+                      widget.promotion == null ? 'Thêm' : 'Cập nhật',
+                      style: const TextStyle(color: Colors.white),
+                    ),
                   ),
                 ),
               ],
@@ -577,7 +583,9 @@ class _PromotionFormScreenState extends State<_PromotionFormScreen> {
             TextFormField(
               controller: _valueController,
               decoration: InputDecoration(
-                labelText: _type == 'percentage' ? 'Giá trị (%) *' : 'Giá (VNĐ) *',
+                labelText: _type == 'percentage'
+                    ? 'Giá trị (%) *'
+                    : 'Giá (VNĐ) *',
                 border: const OutlineInputBorder(),
               ),
               keyboardType: TextInputType.number,
@@ -610,9 +618,11 @@ class _PromotionFormScreenState extends State<_PromotionFormScreen> {
                 Expanded(
                   child: ListTile(
                     title: const Text('Từ ngày'),
-                    subtitle: Text(_validFrom == null
-                        ? 'Chưa chọn'
-                        : AppFormatters.formatDate(_validFrom!)),
+                    subtitle: Text(
+                      _validFrom == null
+                          ? 'Chưa chọn'
+                          : AppFormatters.formatDate(_validFrom!),
+                    ),
                     trailing: const Icon(Icons.calendar_today),
                     onTap: () async {
                       final date = await showDatePicker(
@@ -630,9 +640,11 @@ class _PromotionFormScreenState extends State<_PromotionFormScreen> {
                 Expanded(
                   child: ListTile(
                     title: const Text('Đến ngày'),
-                    subtitle: Text(_validTo == null
-                        ? 'Chưa chọn'
-                        : AppFormatters.formatDate(_validTo!)),
+                    subtitle: Text(
+                      _validTo == null
+                          ? 'Chưa chọn'
+                          : AppFormatters.formatDate(_validTo!),
+                    ),
                     trailing: const Icon(Icons.calendar_today),
                     onTap: () async {
                       final date = await showDatePicker(
@@ -654,9 +666,11 @@ class _PromotionFormScreenState extends State<_PromotionFormScreen> {
                 Expanded(
                   child: ListTile(
                     title: const Text('Từ giờ'),
-                    subtitle: Text(_startTime == null
-                        ? 'Chưa chọn'
-                        : _startTime!.format(context)),
+                    subtitle: Text(
+                      _startTime == null
+                          ? 'Chưa chọn'
+                          : _startTime!.format(context),
+                    ),
                     trailing: const Icon(Icons.access_time),
                     onTap: () async {
                       final time = await showTimePicker(
@@ -673,7 +687,10 @@ class _PromotionFormScreenState extends State<_PromotionFormScreen> {
                   child: ListTile(
                     title: const Text('Đến giờ'),
                     subtitle: Text(
-                        _endTime == null ? 'Chưa chọn' : _endTime!.format(context)),
+                      _endTime == null
+                          ? 'Chưa chọn'
+                          : _endTime!.format(context),
+                    ),
                     trailing: const Icon(Icons.access_time),
                     onTap: () async {
                       final time = await showTimePicker(
@@ -761,13 +778,15 @@ class _PromotionFormScreenState extends State<_PromotionFormScreen> {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.remove),
-                    onPressed: () =>
-                        setState(() => _priority = (_priority - 1).clamp(0, 10)),
+                    onPressed: () => setState(
+                      () => _priority = (_priority - 1).clamp(0, 10),
+                    ),
                   ),
                   IconButton(
                     icon: const Icon(Icons.add),
-                    onPressed: () =>
-                        setState(() => _priority = (_priority + 1).clamp(0, 10)),
+                    onPressed: () => setState(
+                      () => _priority = (_priority + 1).clamp(0, 10),
+                    ),
                   ),
                 ],
               ),
@@ -819,12 +838,13 @@ class _PromotionFormScreenState extends State<_PromotionFormScreen> {
     Navigator.pop(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(widget.promotion == null
-            ? 'Đã thêm chương trình ưu đãi'
-            : 'Đã cập nhật chương trình ưu đãi'),
+        content: Text(
+          widget.promotion == null
+              ? 'Đã thêm chương trình ưu đãi'
+              : 'Đã cập nhật chương trình ưu đãi',
+        ),
         backgroundColor: AppColors.success,
       ),
     );
   }
 }
-

@@ -35,15 +35,24 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _createDB,
+      onUpgrade: _upgradeDB,
     );
+  }
+
+  // Handle database upgrades
+  Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      // Add category column to order_items table
+      await db.execute('ALTER TABLE order_items ADD COLUMN category TEXT');
+    }
   }
 
   // Create database schema and default admin user
   Future<void> _createDB(Database db, int version) async {
     await _createSchema(db);
-    
+
     // Insert default admin user for login
     await db.insert('users', {
       'id': 'admin-001',
@@ -142,6 +151,7 @@ class DatabaseService {
         order_id TEXT NOT NULL,
         product_id TEXT NOT NULL,
         product_name TEXT NOT NULL,
+        category TEXT,
         price REAL NOT NULL,
         quantity INTEGER NOT NULL,
         subtotal REAL NOT NULL,
@@ -299,7 +309,11 @@ class DatabaseService {
 
   Future<BilliardTable?> getTableById(String id) async {
     final db = await database;
-    final result = await db.query('billiard_tables', where: 'id = ?', whereArgs: [id]);
+    final result = await db.query(
+      'billiard_tables',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
     if (result.isNotEmpty) {
       return BilliardTable.fromMap(result.first);
     }
@@ -421,7 +435,10 @@ class DatabaseService {
     return result.map((map) => Invoice.fromMap(map)).toList();
   }
 
-  Future<List<Invoice>> getInvoicesByDateRange(DateTime start, DateTime end) async {
+  Future<List<Invoice>> getInvoicesByDateRange(
+    DateTime start,
+    DateTime end,
+  ) async {
     final db = await database;
     final result = await db.query(
       'invoices',
@@ -482,7 +499,10 @@ class DatabaseService {
   // Promotion operations
   Future<List<Promotion>> getAllPromotions() async {
     final db = await database;
-    final result = await db.query('promotions', orderBy: 'priority DESC, created_at DESC');
+    final result = await db.query(
+      'promotions',
+      orderBy: 'priority DESC, created_at DESC',
+    );
     return result.map((map) => Promotion.fromMap(map)).toList();
   }
 
@@ -499,7 +519,11 @@ class DatabaseService {
 
   Future<Promotion?> getPromotionById(String id) async {
     final db = await database;
-    final result = await db.query('promotions', where: 'id = ?', whereArgs: [id]);
+    final result = await db.query(
+      'promotions',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
     if (result.isNotEmpty) {
       return Promotion.fromMap(result.first);
     }
@@ -546,11 +570,7 @@ class DatabaseService {
       }
 
       // Recreate database with empty tables (no default data)
-      _database = await openDatabase(
-        path,
-        version: 1,
-        onCreate: _createDB,
-      );
+      _database = await openDatabase(path, version: 1, onCreate: _createDB);
     } catch (e) {
       print('Error resetting database: $e');
       rethrow;
@@ -562,4 +582,3 @@ class DatabaseService {
     db.close();
   }
 }
-
